@@ -1,0 +1,46 @@
+# 비디오 모드
+python inference.py --video_input ../demo/input/brush_tooth_3_clip1.mp4 --video_output ../demo/output/brush_tooth_3_clip1_output.mp4
+python inference.py --video_input ../demo/input/short_video.mp4 --video_output ../demo/output/short_video.mp4 --multi_person True
+python inference.py --video_input ../demo/input/Ways_to_Text_Voice-to-Text_clip1.mp4 --video_output ../demo/output/Ways_to_Text_Voice-to-Text_clip1.mp4
+python inference.py --video_input ../demo/input/Ways_to_Stand_Time_Out_clip2.mp4 --video_output ../demo/output/Ways_to_Stand_Time_Out_clip2.mp4
+
+
+python inference.py --video_input ../demo/input/UBody/train/Entertainment_S1_Trim1_scene001.mp4 --video_output ../demo/output/UBody/train/Entertainment_S1_Trim1_scene001.mp4
+python inference.py --video_input ../demo/input/UBody/train/Entertainment_S7_Trim2_scene001.mp4 --video_output ../demo/output/UBody/train/Entertainment_S7_Trim2_scene001.mp4
+python inference.py --video_input ../demo/input/UBody/train/Online_class_S3_Trim12.mp4 --video_output ../demo/output/UBody/train/Online_class_S3_Trim12.mp4
+
+python inference.py --video_input ../demo/input/UBody/train/Entertainment_S1_Trim1_scene001.mp4 --video_output ../demo/output/smpler_x_s32/UBody/Entertainment_S1_Trim1_scene001.mp4
+python inference.py --video_input ../demo/input/UBody/train/Entertainment_S7_Trim2_scene001.mp4 --video_output ../demo/output/smpler_x_s32/UBody/Entertainment_S7_Trim2_scene001.mp4
+python inference.py --video_input ../demo/input/UBody/train/Online_class_S3_Trim12.mp4 --video_output ../demo/output/smpler_x_s32UBody/Online_class_S3_Trim12.mp4
+python inference.py --video_input ../demo/input/UBody/valid/Fitness_S6_Trim16.mp4 --video_output ../demo/output/smpler_x_s32/UBody/Fitness_S6_Trim16.mp4
+
+
+# MSCOCO
+# train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000036.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000436.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000459.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000536.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000839.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000962.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000001407.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000002225.jpg --output_folder ../demo/output/MSCOCO/train
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000003412.jpg --output_folder ../demo/output/MSCOCO/train
+
+# test
+python inference.py --video_input ../demo/input/MotionX++/brush_tooth_3_clip1.mp4 --video_output ../demo/output/MotionX++/brush_tooth_3_clip1_output.mp4
+python inference.py --video_input ../demo/input/MotionX++/Ways_to_Text_Voice-to-Text_clip1.mp4 --video_output ../demo/output/MotionX++/Ways_to_Text_Voice-to-Text_clip1.mp4
+python inference.py --video_input ../demo/input/MotionX++/Ways_to_Stand_Time_Out_clip2.mp4 --video_output ../demo/output/MotionX++/Ways_to_Stand_Time_Out_clip2.mp4
+
+
+
+cd main
+set RANK=0 && set WORLD_SIZE=1 && set LOCAL_RANK=0 && set MASTER_ADDR=localhost && set MASTER_PORT=45678
+python train.py --num_gpus 1 --exp_name output/train_smpler_x_h32 --master_port 45678 --config config_smpler_x_h32.py
+
+
+
+
+cd D:\Dev\Project\SMPLer-X_128
+python data/EgoBody_Kinect/create_npz.py --egobody_dir D:/Dev/Dataset/EgoBody --smplx_model_path common/utils/human_model_files --output_dir D:/Dev/Dataset/EgoBody
+

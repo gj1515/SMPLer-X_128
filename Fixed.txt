@@ -1,0 +1,143 @@
+  # 기존 이미지 모드 (호환 유지)
+  python inference.py \
+      --num_gpus 1 \
+      --pretrained_model smpler_x_h32 \
+      --img_path ../demo/images/test \
+      --start 1 --end 100 \
+      --output_folder ../demo/results/test
+
+
+================================================================================
+Windows 호환성을 위한 수정 내용 (2024-12-27)
+================================================================================
+
+## 1. requirements.txt
+--------------------------------------------------------------------------------
+변경 전:
+  numpy
+  (yapf 없음)
+
+변경 후:
+  numpy==1.23.5
+  yapf==0.40.1
+
+이유:
+  - numpy<2: chumpy 패키지가 np.bool, np.int 등 deprecated alias 사용
+  - numpy==1.23.5: NumPy 1.24+에서 제거된 API 호환성
+  - yapf==0.40.1: mmcv의 FormatCode(verify=True) 호환성
+
+
+## 2. main/config.py
+--------------------------------------------------------------------------------
+변경 1) shutil import 추가:
+  import shutil
+
+변경 2) cp 명령어를 shutil로 변경 (line 46-57):
+  변경 전:
+    for file in copy_files:
+        os.system(f'cp -r {self.root_dir}/{file} {self.code_dir}')
+
+  변경 후:
+    for file in copy_files:
+        src = osp.join(self.root_dir, file)
+        dst = osp.join(self.code_dir, osp.basename(file))
+        if osp.exists(src):
+            if osp.isdir(src):
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)
+
+변경 3) update_config에서 경로 백슬래시 변환 (line 69-83):
+  변경 전:
+    cfg_save = MMConfig(self.__dict__)
+    cfg_save.dump(osp.join(self.code_dir,'config_base.py'))
+
+  변경 후:
+    # Save (convert backslashes to forward slashes for Windows compatibility)
+    cfg_dict = {}
+    for k, v in self.__dict__.items():
+        if isinstance(v, str):
+            cfg_dict[k] = v.replace('\\', '/')
+        else:
+            cfg_dict[k] = v
+    cfg_save = MMConfig(cfg_dict)
+    cfg_save.dump(osp.join(self.code_dir,'config_base.py'))
+
+이유:
+  - Linux의 cp 명령어는 Windows에서 작동하지 않음
+  - Windows 경로의 백슬래시(\)가 Python 문자열에서 유니코드 이스케이프로 해석됨
+
+
+## 3. common/utils/vis.py
+--------------------------------------------------------------------------------
+변경 (line 1-12):
+  변경 전:
+    import os
+    ...
+    os.environ["PYOPENGL_PLATFORM"] = "egl"
+    import pyrender
+
+  변경 후:
+    import os
+    import sys
+    ...
+    if sys.platform == "win32":
+        os.environ.pop("PYOPENGL_PLATFORM", None)
+    else:
+        os.environ["PYOPENGL_PLATFORM"] = "egl"
+    import pyrender
+
+이유:
+  - EGL은 Linux 전용 OpenGL 플랫폼
+  - Windows에서는 기본 OpenGL(WGL) 사용해야 함
+
+
+## 4. .venv/lib/site-packages/torchgeometry/core/conversions.py
+--------------------------------------------------------------------------------
+변경 (line 301-304):
+  변경 전:
+    mask_c0 = mask_d2 * mask_d0_d1
+    mask_c1 = mask_d2 * (1 - mask_d0_d1)
+    mask_c2 = (1 - mask_d2) * mask_d0_nd1
+    mask_c3 = (1 - mask_d2) * (1 - mask_d0_nd1)
+
+  변경 후:
+    mask_c0 = mask_d2 * mask_d0_d1
+    mask_c1 = mask_d2 * (~mask_d0_d1)
+    mask_c2 = (~mask_d2) * mask_d0_nd1
+    mask_c3 = (~mask_d2) * (~mask_d0_nd1)
+
+이유:
+  - PyTorch 1.12+에서 bool 텐서에 산술 연산(-) 금지됨
+  - 마스크 반전은 ~ (NOT) 연산자 사용
+
+주의:
+  - 이 파일은 site-packages에 있으므로 가상환경 재설치 시 다시 수정 필요
+
+
+## 5. main/inference.py
+--------------------------------------------------------------------------------
+변경 (line 239-241):
+  변경 전:
+    # Convert RGB to BGR and write to video
+    writer.write(vis_img[:, :, ::-1])
+
+  변경 후:
+    # Convert RGB to BGR and uint8, then write to video
+    vis_img_uint8 = np.clip(vis_img, 0, 255).astype(np.uint8)
+    writer.write(vis_img_uint8[:, :, ::-1])
+
+이유:
+  - render_mesh() 함수가 float32 타입 이미지를 반환
+  - OpenCV VideoWriter는 uint8 타입을 기대
+  - float32를 그대로 쓰면 비디오가 깨짐
+  - np.clip(): 0-255 범위로 클리핑 (범위 초과 값 방지)
+  - .astype(np.uint8): float32 → uint8 변환
+
+
+================================================================================
+설치 명령어 (pip 버전)
+================================================================================
+pip install torch==1.12.0+cu113 torchvision==0.13.0+cu113 torchaudio==0.12.0 --extra-index-url https://download.pytorch.org/whl/cu113
+pip install mmcv-full==1.7.1 -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.12.0/index.html
+pip install -r requirements.txt

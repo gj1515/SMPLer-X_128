@@ -1,0 +1,1 @@
+from .EgoBody_Kinect import EgoBody_Kinect

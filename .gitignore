@@ -1,0 +1,12 @@
+__pycache__/
+common/utils/human_model_files
+pretrained_models/
+output
+.vscode
+demo/
+*egg-info/
+.idea/
+data/SHAPY/mesh-mesh-intersection/build/
+data/EgoBody_Kinect/output/
+data/EgoBody_Kinect/recording_20210921_S11_S10_01/
+mmcv
