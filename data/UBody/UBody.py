@@ -24,6 +24,7 @@ class UBody_Part(torch.utils.data.Dataset):
         self.annot_path = osp.join(cfg.data_dir, 'UBody', 'annotations', scene, 'keypoint_annotation.json')
         self.smplx_annot_path = osp.join(cfg.data_dir, 'UBody', 'annotations', scene, 'smplx_annotation.json')
         self.splits_dir = osp.join(cfg.data_dir, 'UBody', 'splits')
+        self.train_list_path = osp.join(osp.dirname(__file__), 'train.txt')
 
         # mscoco joint set
         self.joint_set = {
@@ -120,10 +121,20 @@ class UBody_Part(torch.utils.data.Dataset):
         if self.data_split == 'train':
             datalist = []
 
+            # load train.txt whitelist (if exists and not empty)
+            train_video_list = []
+            if osp.isfile(self.train_list_path):
+                with open(self.train_list_path, 'r') as f:
+                    train_video_list = [line.strip() for line in f if line.strip()]
+                if train_video_list:
+                    print(f'[UBody] Using train.txt whitelist: {len(train_video_list)} videos')
+                    print(f'[UBody] Videos: {train_video_list}')
+
             train_sample_interval = getattr(cfg, 'UBody_train_sample_interval', 1)
 
             split_total_count = 0
             split_img_ids = set()
+
             i = 0
             for aid in db.anns.keys():
                 ann = db.anns[aid]
@@ -132,7 +143,15 @@ class UBody_Part(torch.utils.data.Dataset):
                     file_name = img['file_name'][1:]   # [1:] means delete '/'
                 else:
                     file_name = img['file_name']
-                video_name = file_name.split('/')[-2]
+                video_name_raw = file_name.split('/')[-2]
+
+                # filter by train.txt whitelist (exact match with Trim)
+                if train_video_list:
+                    if video_name_raw not in train_video_list:
+                        continue
+
+                # for test/valid exclusion, use video_name without Trim
+                video_name = video_name_raw
                 if 'Trim' in video_name:
                     video_name = video_name.split('_Trim')[0]
                 if video_name in test_video_list: continue   # exclude the test video
@@ -146,14 +165,17 @@ class UBody_Part(torch.utils.data.Dataset):
                 if i % train_sample_interval != 0:
                     continue
                 img_path = osp.join(self.img_path, file_name)
-                if not os.path.exists(img_path): continue
+                if not os.path.exists(img_path):
+                    continue
 
                 # exclude the samples that are crowd or have few visible keypoints
-                if ann['iscrowd'] or (ann['num_keypoints']==0): continue
+                if ann['iscrowd'] or (ann['num_keypoints'] == 0):
+                    continue
 
                 # bbox
                 bbox = process_bbox(ann['bbox'], img['width'], img['height'])
-                if bbox is None: continue
+                if bbox is None:
+                    continue
 
                 # joint coordinates
                 joint_img = np.array(ann['keypoints'], dtype=np.float32).reshape(-1, 3)
@@ -199,7 +221,8 @@ class UBody_Part(torch.utils.data.Dataset):
                 else:
                     face_bbox = None
 
-                if ann['valid_label'] == 0 or str(aid) not in smplx_params: continue
+                if ann['valid_label'] == 0 or str(aid) not in smplx_params:
+                    continue
 
                 smplx_param = smplx_params[str(aid)]
 

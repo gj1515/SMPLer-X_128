@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import argparse
 import sys
@@ -14,7 +14,6 @@ import torch
 import torch.backends.cudnn as cudnn
 from tqdm import tqdm
 from config import cfg
-
 # ddp
 import torch.distributed as dist
 from common.utils.distribute_utils import (
@@ -22,6 +21,8 @@ from common.utils.distribute_utils import (
 )
 import torch.distributed as dist
 from mmcv.runner import get_dist_info
+from common.utils.check_dataload import show_input_image
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -34,17 +35,78 @@ def parse_args():
 
     return args
 
+
+def print_dataset_info(trainer):
+    """Print dataset information for train and valid sets."""
+    line = '=' * 80
+    trainer.logger_info(line)
+    trainer.logger_info('                              DATASET INFORMATION')
+    trainer.logger_info(line)
+
+    # Train datasets
+    trainer.logger_info('[Train Datasets]')
+    total_annots, total_imgs = 0, 0
+    for info in trainer.train_dataset_info:
+        trainer.logger_info(f"- {info['name']}: original {info['original_annots']} annots ({info['original_imgs']} imgs), "
+                           f"interval {info['sample_interval']}, sampled {info['sampled_annots']} annots ({info['sampled_imgs']} imgs)")
+        total_annots += info['sampled_annots']
+        total_imgs += info['sampled_imgs']
+    trainer.logger_info(f"- Total: {total_annots} annots ({total_imgs} imgs)")
+    trainer.logger_info(line)
+
+    # Valid datasets
+    if hasattr(trainer, 'valid_dataset_info') and trainer.valid_dataset_info:
+        trainer.logger_info('[Valid Datasets]')
+        total_annots, total_imgs = 0, 0
+        for info in trainer.valid_dataset_info:
+            trainer.logger_info(f"- {info['name']}: original {info['original_annots']} annots ({info['original_imgs']} imgs), "
+                               f"interval {info['sample_interval']}, sampled {info['sampled_annots']} annots ({info['sampled_imgs']} imgs)")
+            total_annots += info['sampled_annots']
+            total_imgs += info['sampled_imgs']
+        trainer.logger_info(f"- Total: {total_annots} annots ({total_imgs} imgs)")
+        trainer.logger_info(line)
+
+
 def main():
     args = parse_args()
     config_path = osp.join('./config', args.config)
     cfg.get_config_fromfile(config_path)
-    cfg.update_config(args.num_gpus, args.exp_name)
 
     cudnn.benchmark = True
     set_seed(2023)
 
     # ddp by default in this branch
     distributed, gpu_idx = init_distributed_mode(args.master_port)
+
+    # Only rank 0 creates directories, then broadcast the output_dir to all ranks
+    if distributed:
+        if is_main_process():
+            cfg.update_config(args.num_gpus, args.exp_name)
+            output_dir = cfg.output_dir
+        else:
+            output_dir = None
+
+        # Broadcast output_dir from rank 0 to all ranks
+        import torch.distributed as dist
+        output_dir_list = [output_dir]
+        dist.broadcast_object_list(output_dir_list, src=0)
+        output_dir = output_dir_list[0]
+
+        # Non-rank-0 processes update their config with the shared output_dir
+        if not is_main_process():
+            cfg.num_gpus = args.num_gpus
+            cfg.exp_name = args.exp_name
+            cfg.output_dir = output_dir
+            cfg.model_dir = osp.join(output_dir, 'model_dump')
+            cfg.vis_dir = osp.join(output_dir, 'vis')
+            cfg.log_dir = osp.join(output_dir, 'log')
+            cfg.code_dir = osp.join(output_dir, 'code')
+            cfg.result_dir = osp.join(output_dir, 'result')
+
+        # Ensure all ranks wait for rank 0 to finish directory creation
+        dist.barrier()
+    else:
+        cfg.update_config(args.num_gpus, args.exp_name)
     from base import Trainer
     trainer = Trainer(distributed, gpu_idx)
     
@@ -60,36 +122,6 @@ def main():
     
     trainer._make_batch_generator()
     trainer._make_model()
-
-    # Print dataset information
-    def print_dataset_info(trainer):
-        line = '=' * 80
-        trainer.logger_info(line)
-        trainer.logger_info('                              DATASET INFORMATION')
-        trainer.logger_info(line)
-
-        # Train datasets
-        trainer.logger_info('[Train Datasets]')
-        total_annots, total_imgs = 0, 0
-        for info in trainer.train_dataset_info:
-            trainer.logger_info(f"- {info['name']}: original {info['original_annots']} annots ({info['original_imgs']} imgs), "
-                               f"interval {info['sample_interval']}, sampled {info['sampled_annots']} annots ({info['sampled_imgs']} imgs)")
-            total_annots += info['sampled_annots']
-            total_imgs += info['sampled_imgs']
-        trainer.logger_info(f"- Total: {total_annots} annots ({total_imgs} imgs)")
-        trainer.logger_info(line)
-
-        # Valid datasets
-        if hasattr(trainer, 'valid_dataset_info') and trainer.valid_dataset_info:
-            trainer.logger_info('[Valid Datasets]')
-            total_annots, total_imgs = 0, 0
-            for info in trainer.valid_dataset_info:
-                trainer.logger_info(f"- {info['name']}: original {info['original_annots']} annots ({info['original_imgs']} imgs), "
-                                   f"interval {info['sample_interval']}, sampled {info['sampled_annots']} annots ({info['sampled_imgs']} imgs)")
-                total_annots += info['sampled_annots']
-                total_imgs += info['sampled_imgs']
-            trainer.logger_info(f"- Total: {total_annots} annots ({total_imgs} imgs)")
-            trainer.logger_info(line)
 
     if is_main_process():
         print_dataset_info(trainer)
@@ -116,7 +148,9 @@ def main():
 
             # forward
             trainer.optimizer.zero_grad()
+            show_input_image(inputs)
             loss= trainer.model(inputs, targets, meta_info, 'train')
+
             loss_mean = {k: loss[k].mean() for k in loss}
             loss_sum = sum(loss_mean[k] for k in loss_mean)
             

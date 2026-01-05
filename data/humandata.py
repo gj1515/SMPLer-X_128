@@ -16,7 +16,69 @@ import time
 import random
 
 KPS2D_KEYS = ['keypoints2d', 'keypoints2d_smplx', 'keypoints2d_smpl', 'keypoints2d_original']
-KPS3D_KEYS = ['keypoints3d_cam', 'keypoints3d', 'keypoints3d_smplx','keypoints3d_smpl' ,'keypoints3d_original'] 
+KPS3D_KEYS = ['keypoints3d_cam', 'keypoints3d', 'keypoints3d_smplx','keypoints3d_smpl' ,'keypoints3d_original']
+
+def visualize_keypoints_debug(datalist, dataset_name, save_dir='debug_keypoints_vis', num_samples=5):
+    """
+    Visualize 2D keypoints on images for debugging data loading.
+
+    Args:
+        datalist: List of data dictionaries containing img_path, joint_img, bbox, etc.
+        dataset_name: Name of the dataset for filename prefix
+        save_dir: Directory to save visualization images
+        num_samples: Number of samples to visualize
+    """
+    import os
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Joint part indices (137 joints total)
+    # Body: 0-24, LHand: 25-44, RHand: 45-64, Face: 65-136
+    joint_parts = {
+        'body': (range(0, 25), (0, 0, 255)),      # Red (BGR)
+        'lhand': (range(25, 45), (0, 255, 0)),    # Green
+        'rhand': (range(45, 65), (255, 0, 0)),    # Blue
+        'face': (range(65, 137), (0, 255, 255))   # Yellow
+    }
+
+    num_to_vis = min(num_samples, len(datalist))
+    print(f'[DEBUG] Visualizing {num_to_vis} samples from {dataset_name}...')
+
+    for idx in range(num_to_vis):
+        data = datalist[idx]
+        img_path = data['img_path']
+        joint_img = data['joint_img']  # (137, 2) - 2D keypoints
+        bbox = data['bbox']  # (4,) - x, y, w, h
+        joint_valid = data['joint_valid']  # (137, 1)
+
+        # Load image
+        img = cv2.imread(img_path)
+        if img is None:
+            print(f'[DEBUG] Failed to load image: {img_path}')
+            continue
+
+        # Draw bbox (green rectangle)
+        x, y, w, h = bbox
+        cv2.rectangle(img, (int(x), int(y)), (int(x+w), int(y+h)), (0, 255, 0), 2)
+
+        # Draw keypoints by body part
+        for part_name, (indices, color) in joint_parts.items():
+            for j_idx in indices:
+                if j_idx < len(joint_img) and joint_valid[j_idx] > 0:
+                    x_kp, y_kp = joint_img[j_idx]
+                    if 0 <= x_kp < img.shape[1] and 0 <= y_kp < img.shape[0]:
+                        cv2.circle(img, (int(x_kp), int(y_kp)), 3, color, -1)
+
+        # Add legend
+        legend_y = 30
+        for part_name, (_, color) in joint_parts.items():
+            cv2.putText(img, part_name, (10, legend_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+            legend_y += 25
+
+        # Save image
+        save_path = os.path.join(save_dir, f'{dataset_name}_{idx}.jpg')
+        cv2.imwrite(save_path, img)
+
+    print(f'[DEBUG] Visualization complete. Check {save_dir}/')
 # keypoints3d_cam with root-align has higher priority, followed by old version key keypoints3d
 # when there is keypoints3d_smplx, use this rather than keypoints3d_original
 
@@ -364,6 +426,10 @@ class HumanDataset(torch.utils.data.Dataset):
 
             if getattr(cfg, 'eval_on_train', False):
                 return datalist[:10000]
+
+        # Debug: Visualize first 5 images with 2D keypoints
+        if self.data_split == 'train' and len(datalist) > 0:
+            visualize_keypoints_debug(datalist, self.__class__.__name__, num_samples=5)
 
         return datalist
 

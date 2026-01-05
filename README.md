@@ -5,6 +5,8 @@
 ```bash
 pip install -r requirements.txt
 
+pip install --no-build-isolation chumpy
+
 git clone -b v1.7.1 https://github.com/open-mmlab/mmcv.git
 cd mmcv
 set MMCV_WITH_OPS=1

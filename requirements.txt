@@ -16,7 +16,6 @@ opencv-python
 tensorboardx
 filterpy
 cython
-chumpy
 Pillow
 trimesh
 pyrender
