@@ -58,8 +58,12 @@ class Config:
         add_pypath(self.data_dir)
                 
     def prepare_dirs(self, exp_name):
-        time_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        self.output_dir = osp.join(self.root_dir, f'{exp_name}_{time_str}')
+        # If output_dir is specified in config, use it directly (no timestamp)
+        if hasattr(self, 'output_dir') and self.output_dir is not None:
+            pass  # use config-specified output_dir
+        else:
+            time_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            self.output_dir = osp.join(self.root_dir, f'{exp_name}_{time_str}')
         self.model_dir = osp.join(self.output_dir, 'model_dump')
         self.vis_dir = osp.join(self.output_dir, 'vis')
         self.log_dir = osp.join(self.output_dir, 'log')
@@ -80,7 +84,7 @@ class Config:
         for file in copy_files:
             src = osp.join(self.root_dir, file)
             dst = osp.join(self.code_dir, osp.basename(file))
-            if osp.exists(src):
+            if osp.exists(src) and not osp.exists(dst):
                 if osp.isdir(src):
                     shutil.copytree(src, dst)
                 else:

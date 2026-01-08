@@ -99,9 +99,14 @@ class Trainer(Base):
         for k in dump_key:
             state['network'].pop(k, None)
 
+        # save scheduler state
+        if hasattr(self, 'scheduler'):
+            state['scheduler'] = self.scheduler.state_dict()
+
         torch.save(state, file_path)
 
-    def load_model(self, model, optimizer):
+    def load_model(self, model, optimizer, scheduler=None):
+        ckpt = None
         if cfg.pretrained_model_path is not None:
             ckpt_path = cfg.pretrained_model_path
             ckpt = torch.load(ckpt_path, map_location=torch.device('cpu')) # solve CUDA OOM error in DDP
@@ -111,12 +116,16 @@ class Trainer(Base):
                 start_epoch = 0
             else:
                 optimizer.load_state_dict(ckpt['optimizer'])
-                start_epoch = ckpt['epoch'] + 1 
-                self.logger.info(f'Load optimizer, start from{start_epoch}')
+                start_epoch = ckpt['epoch'] + 1
+                self.logger.info(f'Load optimizer, start from {start_epoch}')
+                # Load scheduler state if available
+                if scheduler is not None and 'scheduler' in ckpt:
+                    scheduler.load_state_dict(ckpt['scheduler'])
+                    self.logger.info('Load scheduler state')
         else:
             start_epoch = 0
 
-        return start_epoch, model, optimizer
+        return start_epoch, model, optimizer, scheduler
 
     def get_lr(self):
         for g in self.optimizer.param_groups:
@@ -311,10 +320,7 @@ class Trainer(Base):
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, cfg.end_epoch * self.itr_per_epoch,
                                                                eta_min=getattr(cfg,'min_lr',1e-6))
         if cfg.continue_train:
-            if self.distributed:
-                start_epoch, model, optimizer = self.load_model(model, optimizer)
-            else:
-                start_epoch, model, optimizer = self.load_model(model, optimizer)
+            start_epoch, model, optimizer, scheduler = self.load_model(model, optimizer, scheduler)
         else:
             start_epoch = 0
         model.train()

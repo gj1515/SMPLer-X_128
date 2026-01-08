@@ -3,6 +3,32 @@ import numpy as np
 from torch.utils.data.dataset import Dataset
 from config import cfg
 
+
+# Fixed by SH Heo (260108) - Print dataset info for train/valid datasets
+def print_dataset_info(infos, split_name='Train'):
+    """Print dataset information summary.
+
+    Args:
+        infos: List of dataset_info dicts
+        split_name: 'Train' or 'Valid'
+    """
+    line = '=' * 80
+    print(line)
+    print(f'[{split_name} Datasets]')
+
+    total_original, total_sampled, total_final = 0, 0, 0
+    for info in infos:
+        print(f"  - {info['name']}: original {info['original']}, "
+              f"sampled {info['sampled']}, {split_name.lower()} {info['final']} "
+              f"(interval {info['sample_interval']})")
+        total_original += info['original']
+        total_sampled += info['sampled']
+        total_final += info['final']
+
+    print(f"  - Total: original {total_original}, sampled {total_sampled}, {split_name.lower()} {total_final}")
+    print(line)
+
+
 class MultipleDatasets(Dataset):
     def __init__(self, dbs, make_same_len=True, total_len=None, verbose=False):
         self.dbs = dbs

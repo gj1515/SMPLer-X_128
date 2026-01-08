@@ -9,7 +9,7 @@ exp_name = 'output/exp_251231'
 save_epoch = 1
 
 # scheduler setting
-lr = 1e-5
+lr = 2.5e-6
 scheduler = 'step'
 step_size = 10
 gamma = 0.5
@@ -23,12 +23,13 @@ bbox_ratio = 1.2
 # continue
 continue_train = True
 start_over = False
-pretrained_model_path = '../pretrained_models/smpler_x_s32.pth.tar'
+pretrained_model_path = '../train_260106/smpler_x_s3_20260105_221224/model_dump/snapshot_20.pth.tar'
+output_dir = '../train_260106/smpler_x_s3_20260105_221224'
 
 # dataset setting
 data_dir = 'D:/Dev/Dataset'
-agora_fix_betas = True
-agora_fix_global_orient_transl = True
+agora_fix_betas = False
+agora_fix_global_orient_transl = False
 agora_valid_root_pose = True
 
 # top5
@@ -36,19 +37,22 @@ dataset_list = ['Human36M', 'MSCOCO', 'MPII', 'AGORA', 'EHF', 'SynBody', 'GTA_Hu
     'EgoBody_Egocentric', 'EgoBody_Kinect', 'UBody', 'PW3D', 'MuCo', 'PROX']
 trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['MSCOCO', 'UBody']
-validset = ['MSCOCO', 'UBody']
+trainset_humandata = ['MSCOCO', 'UBody', 'AGORA']
+validset = ['MSCOCO', 'UBody', 'AGORA']
 testset = 'EHF'
 
 use_cache = False
 # downsample
-MSCOCO_train_sample_interval = 3
+MSCOCO_train_sample_interval = 5
 MSCOCO_valid_sample_interval = 1
 
-UBody_train_sample_interval = 5
-UBody_valid_sample_interval = 25
-UBody_test_sample_interval = 25
+UBody_train_sample_interval = 8
+UBody_valid_sample_interval = 28
+UBody_test_sample_interval = 28
 make_same_len = False
+
+AGORA_train_sample_interval = 4
+AGORA_valid_sample_interval = 3
 
 BEDLAM_train_sample_interval = 5
 EgoBody_Kinect_train_sample_interval = 10
@@ -117,4 +121,4 @@ num_thread = 4
 vis = False
 
 ## directory
-output_dir, model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None, None
+model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None

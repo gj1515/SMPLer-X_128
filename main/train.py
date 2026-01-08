@@ -22,6 +22,7 @@ from common.utils.distribute_utils import (
 import torch.distributed as dist
 from mmcv.runner import get_dist_info
 from common.utils.check_dataload import show_input_image
+from dataset import print_dataset_info
 
 
 def parse_args():
@@ -34,37 +35,6 @@ def parse_args():
     args = parser.parse_args()
 
     return args
-
-
-def print_dataset_info(trainer):
-    """Print dataset information for train and valid sets."""
-    line = '=' * 80
-    trainer.logger_info(line)
-    trainer.logger_info('                              DATASET INFORMATION')
-    trainer.logger_info(line)
-
-    # Train datasets
-    trainer.logger_info('[Train Datasets]')
-    total_annots, total_imgs = 0, 0
-    for info in trainer.train_dataset_info:
-        trainer.logger_info(f"- {info['name']}: original {info['original_annots']} annots ({info['original_imgs']} imgs), "
-                           f"interval {info['sample_interval']}, sampled {info['sampled_annots']} annots ({info['sampled_imgs']} imgs)")
-        total_annots += info['sampled_annots']
-        total_imgs += info['sampled_imgs']
-    trainer.logger_info(f"- Total: {total_annots} annots ({total_imgs} imgs)")
-    trainer.logger_info(line)
-
-    # Valid datasets
-    if hasattr(trainer, 'valid_dataset_info') and trainer.valid_dataset_info:
-        trainer.logger_info('[Valid Datasets]')
-        total_annots, total_imgs = 0, 0
-        for info in trainer.valid_dataset_info:
-            trainer.logger_info(f"- {info['name']}: original {info['original_annots']} annots ({info['original_imgs']} imgs), "
-                               f"interval {info['sample_interval']}, sampled {info['sampled_annots']} annots ({info['sampled_imgs']} imgs)")
-            total_annots += info['sampled_annots']
-            total_imgs += info['sampled_imgs']
-        trainer.logger_info(f"- Total: {total_annots} annots ({total_imgs} imgs)")
-        trainer.logger_info(line)
 
 
 def main():
@@ -123,8 +93,12 @@ def main():
     trainer._make_batch_generator()
     trainer._make_model()
 
+    # Fixed by SH Heo (260108) - Print dataset info
     if is_main_process():
-        print_dataset_info(trainer)
+        if trainer.train_dataset_info:
+            print_dataset_info(trainer.train_dataset_info, 'Train')
+        if hasattr(trainer, 'valid_dataset_info') and trainer.valid_dataset_info:
+            print_dataset_info(trainer.valid_dataset_info, 'Valid')
 
     trainer.logger_info('### Start training ###')
 

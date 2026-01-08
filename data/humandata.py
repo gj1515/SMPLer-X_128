@@ -291,12 +291,11 @@ class HumanDataset(torch.utils.data.Dataset):
         print('Done. Time: {:.2f}s'.format(time.time() - tic))
 
         datalist = []
+        sampled_count = 0
         for i in tqdm.tqdm(range(int(num_examples))):
-            if self.data_split == 'train' and i % train_sample_interval != 0:
-                continue
-            if self.data_split == 'test' and i % test_sample_interval != 0:
-                continue
             img_path = osp.join(self.img_dir, image_path[i])
+            if not osp.exists(img_path):
+                continue
             img_shape = image_shape[i] if image_shape is not None else self.img_shape
 
             bbox = bbox_xywh[i][:4]
@@ -364,7 +363,7 @@ class HumanDataset(torch.utils.data.Dataset):
             if self.__class__.__name__ == 'Talkshow':
                 smplx_param['body_pose'] = smplx_param['body_pose'].reshape(21, 3)
                 smplx_param['lhand_pose'] = smplx_param['lhand_pose'].reshape(15, 3)
-                smplx_param['rhand_pose'] = smplx_param['lhand_pose'].reshape(15, 3)
+                smplx_param['rhand_pose'] = smplx_param['rhand_pose'].reshape(15, 3)
                 smplx_param['expr'] = smplx_param['expr'][:10]
 
             if self.__class__.__name__ == 'BEDLAM':
@@ -397,6 +396,24 @@ class HumanDataset(torch.utils.data.Dataset):
             if joint_cam is not None and np.any(np.isnan(joint_cam)):
                 continue
 
+            # skip if any smplx param contains NaN
+            has_nan = False
+            for param_value in smplx_param.values():
+                if param_value is not None and isinstance(param_value, np.ndarray) and np.any(np.isnan(param_value)):
+                    has_nan = True
+                    break
+            if has_nan:
+                continue
+
+            # quality filtering passed
+            sampled_count += 1
+
+            # sample interval filtering
+            if self.data_split == 'train' and i % train_sample_interval != 0:
+                continue
+            if self.data_split == 'test' and i % test_sample_interval != 0:
+                continue
+
             datalist.append({
                 'img_path': img_path,
                 'img_shape': img_shape,
@@ -413,10 +430,18 @@ class HumanDataset(torch.utils.data.Dataset):
         # save memory
         del content, image_path, bbox_xywh, lhand_bbox_xywh, rhand_bbox_xywh, face_bbox_xywh, keypoints3d, keypoints2d
 
-        if self.data_split == 'train':
-            print(f'[{self.__class__.__name__} train] original size:', int(num_examples),
-                  '. Sample interval:', train_sample_interval,
-                  '. Sampled size:', len(datalist))
+        # Fixed by SH Heo (260108) - Store dataset info for print_dataset_info in train.py
+        sample_interval = train_sample_interval if self.data_split == 'train' else test_sample_interval
+        self.dataset_info = {
+            'name': self.__class__.__name__,
+            'original': int(num_examples),
+            'sampled': sampled_count,
+            'final': len(datalist),
+            'sample_interval': sample_interval,
+        }
+
+        print(f'[{self.__class__.__name__} {self.data_split}] original: {num_examples}, '
+              f'sampled: {sampled_count}, {self.data_split}: {len(datalist)} (interval: {sample_interval})')
 
         if (getattr(cfg, 'data_strategy', None) == 'balance' and self.data_split == 'train') or \
                 getattr(cfg, 'eval_on_train', False):

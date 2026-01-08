@@ -3,45 +3,56 @@ import os.path as osp
 
 # will be update in exp
 num_gpus = -1
-exp_name = 'output/exp_251230'
+exp_name = 'output/exp_251231'
 
 # quick access
 save_epoch = 1
-lr = 1e-5
-end_epoch = 500
+
+# scheduler setting
+lr = 2.5e-6
+scheduler = 'step'
+step_size = 10
+gamma = 0.5
+
+end_epoch = 5000
 train_batch_size = 16
 
 syncbn = True
 bbox_ratio = 1.2
 
 # continue
-continue_train = False
-start_over = True
+continue_train = True
+start_over = False
+pretrained_model_path = '../train_260106/smpler_x_s3_20260105_221224/model_dump/snapshot_20.pth.tar'
+output_dir = '../train_260106/smpler_x_s3_20260105_221224'
 
 # dataset setting
 data_dir = 'D:/Dev/Dataset'
-agora_fix_betas = True
-agora_fix_global_orient_transl = True
+agora_fix_betas = False
+agora_fix_global_orient_transl = False
 agora_valid_root_pose = True
 
 # top5
 dataset_list = ['Human36M', 'MSCOCO', 'MPII', 'AGORA', 'EHF', 'SynBody', 'GTA_Human2', \
     'EgoBody_Egocentric', 'EgoBody_Kinect', 'UBody', 'PW3D', 'MuCo', 'PROX']
-trainset_3d = ['MSCOCO', 'UBody']
+trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['EgoBody_Kinect']
-validset = ['MSCOCO', 'UBody']
+trainset_humandata = ['MSCOCO', 'UBody', 'AGORA']
+validset = ['MSCOCO', 'UBody', 'AGORA']
 testset = 'EHF'
 
 use_cache = False
 # downsample
-MSCOCO_train_sample_interval = 1
-MSCOCO_valid_sample_interval = 10
+MSCOCO_train_sample_interval = 5
+MSCOCO_valid_sample_interval = 1
 
-UBody_train_sample_interval = 100
-UBody_valid_sample_interval = 100
-UBody_test_sample_interval = 100
+UBody_train_sample_interval = 8
+UBody_valid_sample_interval = 28
+UBody_test_sample_interval = 28
+make_same_len = False
 
+AGORA_train_sample_interval = 4
+AGORA_valid_sample_interval = 3
 
 BEDLAM_train_sample_interval = 5
 EgoBody_Kinect_train_sample_interval = 10
@@ -55,7 +66,7 @@ FIT3D_train_sample_interval = 10
 Talkshow_train_sample_interval = 10
 
 # strategy
-data_strategy = 'balance' # 'balance' need to define total_data_len
+data_strategy = 'concat' # 'balance' need to define total_data_len
 #total_data_len = 750000
 total_data_len = 'auto'
 
@@ -83,11 +94,6 @@ face_pos_joint_num = 72
 num_task_token = 24
 num_noise_sample = 0
 
-## UBody setting
-train_sample_interval = 10
-test_sample_interval = 100
-make_same_len = False
-
 ## input, output size
 input_img_shape = (512, 384)
 input_body_shape = (256, 192)
@@ -114,5 +120,5 @@ test_batch_size = 16
 num_thread = 4
 vis = False
 
-## directory
-output_dir, model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None, None
+## directory (output_dir is set above for resume training)
+model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None

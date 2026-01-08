@@ -3,9 +3,8 @@ import os.path as osp
 
 # will be update in exp
 num_gpus = -1
-exp_name = 'output/exp_251231'
+exp_name = 'output/exp1/pre_analysis'
 
-# quick access
 save_epoch = 1
 
 # scheduler setting
@@ -22,13 +21,13 @@ bbox_ratio = 1.2
 
 # continue
 continue_train = True
-start_over = False
-pretrained_model_path = '../pretrained_models/smpler_x_s32.pth.tar'
+start_over = True
+pretrained_model_path = '../pretrained_models/smpler_x_l32.pth.tar'
 
 # dataset setting
 data_dir = 'D:/Dev/Dataset'
-agora_fix_betas = True
-agora_fix_global_orient_transl = True
+agora_fix_betas = False
+agora_fix_global_orient_transl = False
 agora_valid_root_pose = True
 
 # top5
@@ -36,18 +35,21 @@ dataset_list = ['Human36M', 'MSCOCO', 'MPII', 'AGORA', 'EHF', 'SynBody', 'GTA_Hu
     'EgoBody_Egocentric', 'EgoBody_Kinect', 'UBody', 'PW3D', 'MuCo', 'PROX']
 trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['MSCOCO', 'UBody']
-validset = ['MSCOCO', 'UBody']
+trainset_humandata = ['MSCOCO', 'UBody', 'AGORA']
+validset = ['MSCOCO', 'UBody', 'AGORA']
 testset = 'EHF'
 
 use_cache = False
 # downsample
-MSCOCO_train_sample_interval = 3
+MSCOCO_train_sample_interval = 5
 MSCOCO_valid_sample_interval = 1
 
-UBody_train_sample_interval = 5
-UBody_valid_sample_interval = 25
-UBody_test_sample_interval = 25
+AGORA_train_sample_interval = 4
+AGORA_valid_sample_interval = 3
+
+UBody_train_sample_interval = 8
+UBody_valid_sample_interval = 28
+UBody_test_sample_interval = 28
 make_same_len = False
 
 BEDLAM_train_sample_interval = 5
@@ -63,7 +65,6 @@ Talkshow_train_sample_interval = 10
 
 # strategy
 data_strategy = 'concat' # 'balance' need to define total_data_len
-#total_data_len = 750000
 total_data_len = 'auto'
 
 # model
@@ -76,10 +77,10 @@ net_kps_2d_weight = 1.0
 
 agora_benchmark = 'agora_model' # 'agora_model', 'test_only'
 
-model_type = 'smpler_x_s'
-encoder_config_file = 'transformer_utils/configs/smpler_x/encoder/body_encoder_small.py'
-encoder_pretrained_model_path = '../pretrained_models/vitpose_small.pth'
-feat_dim = 384
+model_type = 'smpler_x_l'
+encoder_config_file = 'transformer_utils/configs/smpler_x/encoder/body_encoder_large.py'
+encoder_pretrained_model_path = '../pretrained_models/vitpose_large.pth'
+feat_dim = 1024
 
 
 ## =====FIXED ARGS============================================================
@@ -89,6 +90,11 @@ hand_pos_joint_num = 20
 face_pos_joint_num = 72
 num_task_token = 24
 num_noise_sample = 0
+
+## UBody setting
+train_sample_interval = 10
+test_sample_interval = 100
+make_same_len = False
 
 ## input, output size
 input_img_shape = (512, 384)
