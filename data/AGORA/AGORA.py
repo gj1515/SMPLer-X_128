@@ -529,8 +529,8 @@ class AGORA(torch.utils.data.Dataset):
 
         # Added by SH Heo (260105)
         # Debug: Visualize first 5 images with 2D keypoints
-        if self.data_split == 'train' and len(datalist) > 0:
-            visualize_agora_keypoints_debug(datalist, num_samples=5)
+        #if self.data_split == 'train' and len(datalist) > 0:
+        #    visualize_agora_keypoints_debug(datalist, num_samples=5)
 
         return datalist
 

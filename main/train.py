@@ -122,7 +122,7 @@ def main():
 
             # forward
             trainer.optimizer.zero_grad()
-            show_input_image(inputs)
+            #show_input_image(inputs)
             loss= trainer.model(inputs, targets, meta_info, 'train')
 
             loss_mean = {k: loss[k].mean() for k in loss}
