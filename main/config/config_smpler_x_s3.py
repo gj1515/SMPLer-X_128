@@ -9,25 +9,23 @@ exp_name = 'output/exp_251231'
 save_epoch = 1
 
 # scheduler setting
-lr = 2.5e-6
+lr = 1e-5
 scheduler = 'step'
 step_size = 10
 gamma = 0.5
 
 end_epoch = 5000
-train_batch_size = 16
+train_batch_size = 32
 
 syncbn = True
 bbox_ratio = 1.2
 
 # continue
 continue_train = True
-start_over = False
-pretrained_model_path = '../train_260106/smpler_x_s3_20260105_221224/model_dump/snapshot_20.pth.tar'
-output_dir = '../train_260106/smpler_x_s3_20260105_221224'
+start_over = True
 
 # dataset setting
-data_dir = 'D:/Dev/Dataset'
+data_dir = '/home/oem/workspace/xrlab/Dataset'
 agora_fix_betas = False
 agora_fix_global_orient_transl = False
 agora_valid_root_pose = True
@@ -37,8 +35,10 @@ dataset_list = ['Human36M', 'MSCOCO', 'MPII', 'AGORA', 'EHF', 'SynBody', 'GTA_Hu
     'EgoBody_Egocentric', 'EgoBody_Kinect', 'UBody', 'PW3D', 'MuCo', 'PROX']
 trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['MSCOCO', 'UBody', 'AGORA']
-validset = ['MSCOCO', 'UBody', 'AGORA']
+#trainset_humandata = ['MSCOCO', 'UBody', 'AGORA']
+#validset = ['MSCOCO', 'UBody', 'AGORA']
+trainset_humandata = ['MSCOCO']
+validset = ['MSCOCO']
 testset = 'EHF'
 
 use_cache = False
@@ -82,7 +82,8 @@ agora_benchmark = 'agora_model' # 'agora_model', 'test_only'
 
 model_type = 'smpler_x_s'
 encoder_config_file = 'transformer_utils/configs/smpler_x/encoder/body_encoder_small.py'
-encoder_pretrained_model_path = '../pretrained_models/vitpose_small.pth'
+encoder_pretrained_model_path = '/home/oem/workspace/xrlab/Project/SMPLer-X_128/pretrained_models/pretrained_models/vitpose_small.pth'
+pretrained_model_path = None
 feat_dim = 384
 
 
@@ -114,11 +115,11 @@ print_iters = 100
 lr_mult = 1
 
 ## testing config
-test_batch_size = 16
+test_batch_size = 32
 
 ## others
-num_thread = 4
+num_thread = 8
 vis = False
 
 ## directory (output_dir is set above for resume training)
-model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None
+output_dir, model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None, None

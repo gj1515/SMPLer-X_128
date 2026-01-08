@@ -3,21 +3,34 @@
 
 ## Install
 ```bash
+# Windows cuda 12.8
+
 pip install -r requirements.txt
-
 pip install --no-build-isolation chumpy
-
 git clone -b v1.7.1 https://github.com/open-mmlab/mmcv.git
 cd mmcv
 set MMCV_WITH_OPS=1
 pip install -v -e .
 cd ..
-
+git clone -b v1.7.1 https://github.com/open-mmlab/mmcv.git
+cd mmcv
+export MMCV_WITH_OPS=1
+pip install -v -e .
+cd ..
 # install mmpose
 cd main/transformer_utils
 pip install -v -e .
 cd ../..
 
+
+# Linux cuda 11.8
+pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
+pip install -r requirements.txt
+pip install --no-build-isolation chumpy
+pip install mmcv-full==1.7.2 -f https://download.openmmlab.com/mmcv/dist/cu118/torch2.0/index.html
+cd main/transformer_utils
+pip install -v -e .
+cd ../..
 ```
 
 ## Pretrained Models

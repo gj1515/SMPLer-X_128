@@ -135,6 +135,16 @@ class Trainer(Base):
     def _make_batch_generator(self):
         # data load and construct batch generator
         self.logger_info("Creating dataset...")
+
+        # Fixed by SH Heo (260108) - Handle 'ratio' strategy: set interval before loading datasets
+        data_strategy = getattr(cfg, 'data_strategy', None)
+        if data_strategy == 'ratio':
+            train_data_ratio = getattr(cfg, 'train_data_ratio', 1.0)
+            interval = max(1, int(1 / train_data_ratio))
+            self.logger_info(f"Using [ratio] strategy: train_data_ratio={train_data_ratio}, interval={interval}")
+            for ds_name in cfg.trainset_3d + cfg.trainset_2d + cfg.trainset_humandata:
+                setattr(cfg, f'{ds_name}_train_sample_interval', interval)
+
         trainset3d_loader = []
         for i in range(len(cfg.trainset_3d)):
             trainset3d_loader.append(eval(cfg.trainset_3d[i])(transforms.ToTensor(), "train"))
@@ -151,10 +161,15 @@ class Trainer(Base):
             if hasattr(ds, 'dataset_info'):
                 self.train_dataset_info.append(ds.dataset_info)
 
-        data_strategy = getattr(cfg, 'data_strategy', None)
+        # Fixed by SH Heo (260108) - Added 'ratio' strategy
         if data_strategy == 'concat':
             print("Using [concat] strategy...")
-            trainset_loader = MultipleDatasets(trainset3d_loader + trainset2d_loader + trainset_humandata_loader, 
+            trainset_loader = MultipleDatasets(trainset3d_loader + trainset2d_loader + trainset_humandata_loader,
+                                                make_same_len=False, verbose=True)
+        elif data_strategy == 'ratio':
+            # ratio strategy: interval already applied, use concat-like loading
+            print("Using [ratio] strategy...")
+            trainset_loader = MultipleDatasets(trainset3d_loader + trainset2d_loader + trainset_humandata_loader,
                                                 make_same_len=False, verbose=True)
         elif data_strategy == 'balance':
             total_len = getattr(cfg, 'total_data_len', 'auto')

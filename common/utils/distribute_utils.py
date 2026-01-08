@@ -39,10 +39,11 @@ def setup_for_distributed(is_master):
 
 
 # Fixed by SH Heo (251230) - Support local single-GPU training without SLURM
+# Fixed by SH Heo (260108) - Add torchrun support for multi-GPU DDP
 def init_distributed_mode(port = None, master_port=29500):
     """Initialize distributed training environment.
 
-    Supports both SLURM cluster and local single-GPU training.
+    Supports SLURM cluster, torchrun, and local single-GPU training.
 
     Args:
         port (int, optional): Master port. Defaults to None.
@@ -75,6 +76,25 @@ def init_distributed_mode(port = None, master_port=29500):
 
         distributed = True
         gpu_idx = proc_id % num_gpus
+
+    elif 'LOCAL_RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        # torchrun mode (Linux multi-GPU without SLURM)
+        dist_backend = 'nccl'
+        local_rank = int(os.environ['LOCAL_RANK'])
+        world_size = int(os.environ['WORLD_SIZE'])
+        rank = int(os.environ.get('RANK', local_rank))
+
+        torch.cuda.set_device(local_rank)
+        dist.init_process_group(
+            backend=dist_backend,
+            init_method='env://',
+            world_size=world_size,
+            rank=rank
+        )
+
+        distributed = True
+        gpu_idx = local_rank
+
     else:
         # Local single-GPU mode (Windows or non-SLURM Linux)
         # Skip DDP initialization, run in single GPU mode
