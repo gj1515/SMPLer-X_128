@@ -92,13 +92,14 @@ class MSCOCO(torch.utils.data.Dataset):
         # Store dataset info (unified format for print_dataset_info)
         self.dataset_info = {
             'name': 'MSCOCO',
-            'original': len(self.full_datalist),
-            'sampled': len(self.full_datalist),  # before interval sampling
+            'original': getattr(self, '_original_count', len(self.full_datalist)),
+            'sampled': getattr(self, '_sampled_count', len(self.full_datalist)),
             'final': len(self.datalist),
             'sample_interval': self.sample_interval,
         }
 
         print(f"[MSCOCO {data_split}] original {self.dataset_info['original']}, "
+              f"sampled {self.dataset_info['sampled']}, "
               f"interval {self.sample_interval}, final {self.dataset_info['final']}")
 
     def set_epoch(self, epoch):
@@ -142,6 +143,9 @@ class MSCOCO(torch.utils.data.Dataset):
         # train/valid mode - load data filtered by split_images
         if self.data_split in ['train', 'valid']:
             datalist = []
+            original_count = 0  # annotations in current split (before filtering)
+            sampled_count = 0   # passed quality filtering (before interval)
+
             for aid in db.anns.keys():
                 ann = db.anns[aid]
                 img = db.loadImgs(ann['image_id'])[0]
@@ -151,20 +155,27 @@ class MSCOCO(torch.utils.data.Dataset):
                     if img['file_name'] not in self.split_images:
                         continue
 
+                # Count original annotations in this split
+                original_count += 1
+
                 imgname = osp.join('train2017', img['file_name'])
                 img_path = osp.join(self.img_path, imgname)
-
 
                 # Fixed by SH Heo (260108) - skip if image not found
                 if not osp.exists(img_path):
                     continue
 
                 # exclude the samples that are crowd or have few visible keypoints
-                if ann['iscrowd'] or (ann['num_keypoints'] == 0): continue
+                if ann['iscrowd'] or (ann['num_keypoints'] == 0):
+                    continue
 
                 # bbox
                 bbox = process_bbox(ann['bbox'], img['width'], img['height'], ratio=getattr(cfg, 'bbox_ratio', 1.25))
-                if bbox is None: continue
+                if bbox is None:
+                    continue
+
+                # Quality filtering passed
+                sampled_count += 1
 
                 # joint coordinates
                 joint_img = np.array(ann['keypoints'], dtype=np.float32).reshape(-1, 3)
@@ -226,8 +237,12 @@ class MSCOCO(torch.utils.data.Dataset):
                              'lhand_bbox': lhand_bbox, 'rhand_bbox': rhand_bbox, 'face_bbox': face_bbox}
                 datalist.append(data_dict)
 
-            print(f'[MSCOCO {self.data_split}] total annotations: {len(db.anns.keys())}, '
-                  f'filtered samples: {len(datalist)}')
+            # Store counts for dataset_info
+            self._original_count = original_count
+            self._sampled_count = sampled_count
+
+            print(f'[MSCOCO {self.data_split}] original: {original_count}, '
+                  f'sampled: {sampled_count}, datalist: {len(datalist)}')
 
             if getattr(cfg, 'data_strategy', None) == 'balance':
                 print(f"[MSCOCO] Using [balance] strategy with datalist shuffled...")

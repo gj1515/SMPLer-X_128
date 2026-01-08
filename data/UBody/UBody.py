@@ -132,10 +132,10 @@ class UBody_Part(torch.utils.data.Dataset):
 
             train_sample_interval = getattr(cfg, 'UBody_train_sample_interval', 1)
 
-            split_total_count = 0
-            split_img_ids = set()
+            # Fixed by SH Heo (260108) - correct count logic: original -> quality filtering -> sampled -> interval -> final
+            original_count = 0  # annotations in train split (before quality filtering)
+            sampled_count = 0   # passed quality filtering (before interval)
 
-            i = 0
             for aid in db.anns.keys():
                 ann = db.anns[aid]
                 img = db.loadImgs(ann['image_id'])[0]
@@ -157,13 +157,10 @@ class UBody_Part(torch.utils.data.Dataset):
                 if video_name in test_video_list: continue   # exclude the test video
                 if video_name in valid_video_list: continue  # exclude the valid video
 
-                # count original annots/imgs for this split (before sampling)
-                split_total_count += 1
-                split_img_ids.add(ann['image_id'])
+                # count original annots for this split (before quality filtering)
+                original_count += 1
 
-                i = i + 1
-                if i % train_sample_interval != 0:
-                    continue
+                # Fixed by SH Heo (260108) - skip if image not found
                 img_path = osp.join(self.img_path, file_name)
                 if not os.path.exists(img_path):
                     continue
@@ -175,6 +172,16 @@ class UBody_Part(torch.utils.data.Dataset):
                 # bbox
                 bbox = process_bbox(ann['bbox'], img['width'], img['height'])
                 if bbox is None:
+                    continue
+
+                if ann['valid_label'] == 0 or str(aid) not in smplx_params:
+                    continue
+
+                # Quality filtering passed - count sampled
+                sampled_count += 1
+
+                # Apply sample interval (AFTER quality filtering)
+                if sampled_count % train_sample_interval != 0:
                     continue
 
                 # joint coordinates
@@ -221,9 +228,6 @@ class UBody_Part(torch.utils.data.Dataset):
                 else:
                     face_bbox = None
 
-                if ann['valid_label'] == 0 or str(aid) not in smplx_params:
-                    continue
-
                 smplx_param = smplx_params[str(aid)]
 
                 if 'lhand_valid' not in smplx_param['smplx_param']:
@@ -239,12 +243,13 @@ class UBody_Part(torch.utils.data.Dataset):
             # dataset_info for logging (unified format for print_dataset_info)
             self.dataset_info = {
                 'name': 'UBody',
-                'original': split_total_count,
-                'sampled': split_total_count,  # before interval sampling
+                'original': original_count,
+                'sampled': sampled_count,
                 'final': len(datalist),
                 'sample_interval': train_sample_interval,
             }
             print(f"[UBody train] original {self.dataset_info['original']}, "
+                  f"sampled {self.dataset_info['sampled']}, "
                   f"interval {train_sample_interval}, final {self.dataset_info['final']}")
 
             if (getattr(cfg, 'data_strategy', None) == 'balance' and self.data_split == 'train') or \
@@ -269,9 +274,10 @@ class UBody_Part(torch.utils.data.Dataset):
                 test_sample_interval = getattr(cfg, 'UBody_test_sample_interval', 1)
 
             datalist = []
-            split_total_count = 0
-            split_img_ids = set()
-            i = 0
+            # Fixed by SH Heo (260108) - correct count logic: original -> quality filtering -> sampled -> interval -> final
+            original_count = 0  # annotations in valid/test split (before quality filtering)
+            sampled_count = 0   # passed quality filtering (before interval)
+
             for aid in db.anns.keys():
                 ann = db.anns[aid]
                 img = db.loadImgs(ann['image_id'])[0]
@@ -285,13 +291,10 @@ class UBody_Part(torch.utils.data.Dataset):
 
                 if video_name not in target_video_list: continue  # filter by target video list
 
-                # count original annots/imgs for this split (before sampling)
-                split_total_count += 1
-                split_img_ids.add(ann['image_id'])
+                # count original annots for this split (before quality filtering)
+                original_count += 1
 
-                i = i + 1
-                if i % test_sample_interval != 0:
-                    continue
+                # Fixed by SH Heo (260108) - skip if image not found
                 img_path = osp.join(self.img_path, file_name)
                 if not os.path.exists(img_path): continue
 
@@ -303,6 +306,13 @@ class UBody_Part(torch.utils.data.Dataset):
                 # bbox
                 bbox = process_bbox(ann['bbox'], img['width'], img['height'])
                 if bbox is None: continue
+
+                # Quality filtering passed - count sampled
+                sampled_count += 1
+
+                # Apply sample interval (AFTER quality filtering)
+                if sampled_count % test_sample_interval != 0:
+                    continue
 
                 # joint coordinates
                 joint_img = np.array(ann['keypoints'], dtype=np.float32).reshape(-1, 3)
@@ -363,12 +373,13 @@ class UBody_Part(torch.utils.data.Dataset):
             # dataset_info for logging (unified format for print_dataset_info)
             self.dataset_info = {
                 'name': 'UBody',
-                'original': split_total_count,
-                'sampled': split_total_count,  # before interval sampling
+                'original': original_count,
+                'sampled': sampled_count,
                 'final': len(datalist),
                 'sample_interval': test_sample_interval,
             }
             print(f"[UBody {self.data_split}] original {self.dataset_info['original']}, "
+                  f"sampled {self.dataset_info['sampled']}, "
                   f"interval {test_sample_interval}, final {self.dataset_info['final']}")
 
             return datalist

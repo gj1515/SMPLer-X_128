@@ -267,8 +267,8 @@ class AGORA(torch.utils.data.Dataset):
         sample_interval = getattr(cfg, f'AGORA_{self.data_split}_sample_interval', 1)
         self.dataset_info = {
             'name': 'AGORA',
-            'original': getattr(self, '_original_size', len(self.datalist)),
-            'sampled': getattr(self, '_original_size', len(self.datalist)),  # before interval sampling
+            'original': getattr(self, '_original_count', len(self.datalist)),
+            'sampled': getattr(self, '_sampled_count', len(self.datalist)),
             'final': len(self.datalist),
             'sample_interval': sample_interval,
         }
@@ -300,15 +300,13 @@ class AGORA(torch.utils.data.Dataset):
 
             i = 0
             skip_count = {'is_valid': 0, 'json_not_found': 0, 'bbox_none': 0}
+            original_count = len(db.anns.keys())  # total annotations
+            sampled_count = 0  # passed quality filtering (before interval)
+            sample_interval = getattr(cfg, f'AGORA_{self.data_split}_sample_interval', 1)
+
             for aid in tqdm.tqdm(list(db.anns.keys())):
 
                 i += 1
-                # Apply sample interval for train or valid
-                if self.data_split == 'train' and i % getattr(cfg, 'AGORA_train_sample_interval', 1) != 0:
-                    continue
-                if self.data_split == 'valid' and i % getattr(cfg, 'AGORA_valid_sample_interval', 1) != 0:
-                    continue
-
                 ann = db.anns[aid]
                 image_id = ann['image_id']
                 img = db.loadImgs(image_id)[0]
@@ -369,6 +367,13 @@ class AGORA(torch.utils.data.Dataset):
                     face_bbox = sanitize_bbox(face_bbox, img_shape[1], img_shape[0])
                     if face_bbox is not None:
                         face_bbox[2:] += face_bbox[:2]  # xywh -> xyxy
+
+                    # Quality filtering passed
+                    sampled_count += 1
+
+                    # Apply sample interval
+                    if i % sample_interval != 0:
+                        continue
 
                     data_dict = {'img_path': img_path, 'img_shape': img_shape, 'bbox': bbox, 'lhand_bbox': lhand_bbox,
                                  'rhand_bbox': rhand_bbox, 'face_bbox': face_bbox, 'joints_2d_path': joints_2d_path,
@@ -444,6 +449,13 @@ class AGORA(torch.utils.data.Dataset):
                     if face_bbox is not None:
                         face_bbox[2:] += face_bbox[:2]  # xywh -> xyxy
 
+                    # Quality filtering passed
+                    sampled_count += 1
+
+                    # Apply sample interval
+                    if i % sample_interval != 0:
+                        continue
+
                     data_dict = {'img_path': img_path, 'img_shape': img_shape, 'bbox': bbox, 'lhand_bbox': lhand_bbox,
                                  'rhand_bbox': rhand_bbox, 'face_bbox': face_bbox,
                                  'img2bb_trans_from_orig': img2bb_trans_from_orig, 'joints_2d_path': joints_2d_path,
@@ -451,17 +463,14 @@ class AGORA(torch.utils.data.Dataset):
                                  'smplx_param_path': smplx_param_path, 'ann_id': str(aid), 'kid': kid, 'gender': gender}
                     datalist.append(data_dict)
 
-            # Fixed by SH Heo (260105) - Store original size for dataset_info
-            self._original_size = len(db.anns.keys())
+            # Store counts for dataset_info
+            self._original_count = original_count
+            self._sampled_count = sampled_count
 
-            if self.data_split == 'train':
-                print('[AGORA train] original size:', len(db.anns.keys()),
-                      '. Sample interval:', getattr(cfg, 'AGORA_train_sample_interval', 1),
-                      '. Sampled size:', len(datalist))
-            else:
-                print('[AGORA valid] original size:', len(db.anns.keys()),
-                      '. Sample interval:', getattr(cfg, 'AGORA_valid_sample_interval', 1),
-                      '. Sampled size:', len(datalist))
+            sample_interval = getattr(cfg, f'AGORA_{self.data_split}_sample_interval', 1)
+            print(f'[AGORA {self.data_split}] original: {original_count}, '
+                  f'sampled: {sampled_count}, final: {len(datalist)} '
+                  f'(interval: {sample_interval})')
             print(f'[AGORA {self.data_split}] skip_count: {skip_count}')
 
         elif self.data_split == 'test' and self.test_set == 'test':

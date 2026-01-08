@@ -22,7 +22,7 @@ from common.utils.distribute_utils import (
 import torch.distributed as dist
 from mmcv.runner import get_dist_info
 from common.utils.check_dataload import show_input_image
-from dataset import print_dataset_info
+from data.dataset import print_dataset_info
 
 
 def parse_args():
