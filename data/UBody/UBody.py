@@ -236,17 +236,16 @@ class UBody_Part(torch.utils.data.Dataset):
                              'lhand_bbox': lhand_bbox, 'rhand_bbox': rhand_bbox, 'face_bbox': face_bbox}
                 datalist.append(data_dict)
 
-            # dataset_info for logging
+            # dataset_info for logging (unified format for print_dataset_info)
             self.dataset_info = {
                 'name': 'UBody',
-                'original_annots': split_total_count,
-                'original_imgs': len(split_img_ids),
+                'original': split_total_count,
+                'sampled': split_total_count,  # before interval sampling
+                'final': len(datalist),
                 'sample_interval': train_sample_interval,
-                'sampled_annots': len(datalist),
-                'sampled_imgs': len(set([d['img_path'] for d in datalist]))
             }
-            print(f"[UBody train] original {self.dataset_info['original_annots']} annots ({self.dataset_info['original_imgs']} imgs), "
-                  f"interval {train_sample_interval}, sampled {self.dataset_info['sampled_annots']} annots ({self.dataset_info['sampled_imgs']} imgs)")
+            print(f"[UBody train] original {self.dataset_info['original']}, "
+                  f"interval {train_sample_interval}, final {self.dataset_info['final']}")
 
             if (getattr(cfg, 'data_strategy', None) == 'balance' and self.data_split == 'train') or \
                     getattr(cfg, 'eval_on_train', False):
@@ -361,17 +360,16 @@ class UBody_Part(torch.utils.data.Dataset):
                              'lhand_bbox': lhand_bbox, 'rhand_bbox': rhand_bbox, 'face_bbox': face_bbox}
                 datalist.append(data_dict)
 
-            # dataset_info for logging
+            # dataset_info for logging (unified format for print_dataset_info)
             self.dataset_info = {
                 'name': 'UBody',
-                'original_annots': split_total_count,
-                'original_imgs': len(split_img_ids),
+                'original': split_total_count,
+                'sampled': split_total_count,  # before interval sampling
+                'final': len(datalist),
                 'sample_interval': test_sample_interval,
-                'sampled_annots': len(datalist),
-                'sampled_imgs': len(set([d['img_path'] for d in datalist]))
             }
-            print(f"[UBody {self.data_split}] original {self.dataset_info['original_annots']} annots ({self.dataset_info['original_imgs']} imgs), "
-                  f"interval {test_sample_interval}, sampled {self.dataset_info['sampled_annots']} annots ({self.dataset_info['sampled_imgs']} imgs)")
+            print(f"[UBody {self.data_split}] original {self.dataset_info['original']}, "
+                  f"interval {test_sample_interval}, final {self.dataset_info['final']}")
 
             return datalist
 
@@ -732,15 +730,14 @@ class UBody(Dataset):
                     data_strategy=getattr(cfg, 'data_strategy', None)
                 )
 
-        # Aggregate dataset_info from all UBody_Part instances
+        # Aggregate dataset_info from all UBody_Part instances (unified format for print_dataset_info)
         if self.dbs and hasattr(self.dbs[0], 'dataset_info'):
             self.dataset_info = {
                 'name': 'UBody',
-                'original_annots': sum(db.dataset_info['original_annots'] for db in self.dbs),
-                'original_imgs': sum(db.dataset_info['original_imgs'] for db in self.dbs),
+                'original': sum(db.dataset_info['original'] for db in self.dbs),
+                'sampled': sum(db.dataset_info['sampled'] for db in self.dbs),
+                'final': sum(db.dataset_info['final'] for db in self.dbs),
                 'sample_interval': self.dbs[0].dataset_info['sample_interval'],
-                'sampled_annots': len(self.datalist),
-                'sampled_imgs': len(set([d['img_path'] for d in self.datalist]))
             }
 
     def __len__(self):

@@ -89,18 +89,17 @@ class MSCOCO(torch.utils.data.Dataset):
             self.full_datalist = self.datalist
             self.sample_interval = 1
 
-        # Store dataset info (unified format)
+        # Store dataset info (unified format for print_dataset_info)
         self.dataset_info = {
             'name': 'MSCOCO',
-            'original_annots': len(self.full_datalist),
-            'original_imgs': len(self.split_images) if self.split_images else 0,
+            'original': len(self.full_datalist),
+            'sampled': len(self.full_datalist),  # before interval sampling
+            'final': len(self.datalist),
             'sample_interval': self.sample_interval,
-            'sampled_annots': len(self.datalist),
-            'sampled_imgs': len(set([d['img_path'] for d in self.datalist]))
         }
 
-        print(f"[MSCOCO {data_split}] original {self.dataset_info['original_annots']} annots ({self.dataset_info['original_imgs']} imgs), "
-              f"interval {self.sample_interval}, sampled {self.dataset_info['sampled_annots']} annots ({self.dataset_info['sampled_imgs']} imgs)")
+        print(f"[MSCOCO {data_split}] original {self.dataset_info['original']}, "
+              f"interval {self.sample_interval}, final {self.dataset_info['final']}")
 
     def set_epoch(self, epoch):
         """Reload data with new offset for cyclic sampling (train only)."""
@@ -154,6 +153,11 @@ class MSCOCO(torch.utils.data.Dataset):
 
                 imgname = osp.join('train2017', img['file_name'])
                 img_path = osp.join(self.img_path, imgname)
+
+
+                # Fixed by SH Heo (260108) - skip if image not found
+                if not osp.exists(img_path):
+                    continue
 
                 # exclude the samples that are crowd or have few visible keypoints
                 if ann['iscrowd'] or (ann['num_keypoints'] == 0): continue

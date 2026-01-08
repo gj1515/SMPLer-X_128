@@ -43,16 +43,16 @@ testset = 'EHF'
 
 use_cache = False
 # downsample
-MSCOCO_train_sample_interval = 5
+MSCOCO_train_sample_interval = 1
 MSCOCO_valid_sample_interval = 1
 
-UBody_train_sample_interval = 8
-UBody_valid_sample_interval = 28
-UBody_test_sample_interval = 28
+UBody_train_sample_interval = 1
+UBody_valid_sample_interval = 1
+UBody_test_sample_interval = 1
 make_same_len = False
 
-AGORA_train_sample_interval = 4
-AGORA_valid_sample_interval = 3
+AGORA_train_sample_interval = 1
+AGORA_valid_sample_interval = 1
 
 BEDLAM_train_sample_interval = 5
 EgoBody_Kinect_train_sample_interval = 10

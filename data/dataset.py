@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from torch.utils.data.dataset import Dataset
-from config import cfg
+from config import cfgM
 
 
 # Fixed by SH Heo (260108) - Print dataset info for train/valid datasets

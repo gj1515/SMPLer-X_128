@@ -263,15 +263,14 @@ class AGORA(torch.utils.data.Dataset):
         else: # test
             self.datalist = self.load_data()
 
-        # Fixed by SH Heo (260105) - Store dataset info for print_dataset_info
+        # Store dataset info (unified format for print_dataset_info)
         sample_interval = getattr(cfg, f'AGORA_{self.data_split}_sample_interval', 1)
         self.dataset_info = {
             'name': 'AGORA',
-            'original_annots': getattr(self, '_original_size', len(self.datalist)),
-            'original_imgs': getattr(self, '_original_size', len(self.datalist)),
+            'original': getattr(self, '_original_size', len(self.datalist)),
+            'sampled': getattr(self, '_original_size', len(self.datalist)),  # before interval sampling
+            'final': len(self.datalist),
             'sample_interval': sample_interval,
-            'sampled_annots': len(self.datalist),
-            'sampled_imgs': len(self.datalist)
         }
 
     def load_data(self):
@@ -328,6 +327,11 @@ class AGORA(torch.utils.data.Dataset):
                 if self.resolution == (720, 1280):
                     img_shape = self.resolution
                     img_path = osp.join(self.data_path, img['file_name_1280x720'])
+
+                    # Fixed by SH Heo (260108) - skip if image not found
+                    if not osp.isfile(img_path):
+                        skip_count['img_not_found'] = skip_count.get('img_not_found', 0) + 1
+                        continue
 
                     # convert to current resolution
                     bbox = np.array(ann['bbox']).reshape(2, 2)
@@ -388,6 +392,10 @@ class AGORA(torch.utils.data.Dataset):
                         skip_count['json_not_found'] += 1
                         if skip_count['json_not_found'] == 1:
                             print(f'[DEBUG] First missing json_path: {json_path}')
+                        continue
+                    # Fixed by SH Heo (260108) - skip if image not found
+                    if not osp.isfile(img_path):
+                        skip_count['img_not_found'] = skip_count.get('img_not_found', 0) + 1
                         continue
                     with open(json_path) as f:
                         crop_resize_info = json.load(f)
