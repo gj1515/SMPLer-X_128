@@ -1,4 +1,3 @@
-import os
 #os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import argparse
@@ -15,15 +14,13 @@ import torch.backends.cudnn as cudnn
 from tqdm import tqdm
 from config import cfg
 # ddp
-import torch.distributed as dist
 from common.utils.distribute_utils import (
     init_distributed_mode, is_main_process, set_seed
 )
-import torch.distributed as dist
 from mmcv.runner import get_dist_info
-from common.utils.check_dataload import show_input_image
 from data.dataset import print_dataset_info
-
+from main.dataload_utils.check_2d import show_input_image, draw_2d_wholebody_kpts
+from main.dataload_utils.save_debug_data import save_debug_data
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -122,7 +119,13 @@ def main():
 
             # forward
             trainer.optimizer.zero_grad()
-            #show_input_image(inputs)
+            show_input_image(inputs)
+            draw_2d_wholebody_kpts(inputs, targets, meta_info)
+
+            # Debug: save first sample's targets and meta_info to JSON
+            if epoch == 0 and itr == 0:
+                save_debug_data(targets, meta_info, save_dir='debug_output', prefix=f'epoch{epoch}_itr{itr}')
+
             loss= trainer.model(inputs, targets, meta_info, 'train')
 
             loss_mean = {k: loss[k].mean() for k in loss}

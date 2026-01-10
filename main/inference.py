@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('--iou_thr', type=float, default=0.5)
     parser.add_argument('--bbox_thr', type=int, default=50)
 
-    parser.add_argument('--pretrained_model', type=str, default='smplerx_large_mscoco_ubody_agora_260107/snapshot_55')
+    parser.add_argument('--pretrained_model', type=str, default='smplerx_small_randomvalue_cocoubodyagora_260109/snapshot_119')
 
     # Fixed by SH Heo (251227)
     parser.add_argument('--video_input', type=str, default=None, help='Input video file path')

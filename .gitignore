@@ -4,6 +4,7 @@ __pycache__/
 .idea/
 common/utils/human_model_files
 demo/
+main/debug_output
 output
 pretrained_models/
 data/SHAPY/mesh-mesh-intersection/build/

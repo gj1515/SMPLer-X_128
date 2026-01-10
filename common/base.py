@@ -315,8 +315,8 @@ class Trainer(Base):
                     model, device_ids=[self.gpu_idx],
                     find_unused_parameters=True) 
         else:
-        # dp
-            model = DataParallel(model).cuda()
+        # dp - single GPU
+            model = DataParallel(model, device_ids=[0]).cuda()
 
         optimizer = self.get_optimizer(model)
         

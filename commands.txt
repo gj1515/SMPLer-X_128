@@ -6,35 +6,35 @@ python inference.py --video_input ../demo/input/Ways_to_Stand_Time_Out_clip2.mp4
 
 
 # UBody
-python inference.py --video_input ../demo/input/UBody/train/Entertainment_S1_Trim1_scene001.mp4 --video_output ../demo/output/smpler_x_l3_260107/UBody/Entertainment_S1_Trim1_scene001.mp4
-python inference.py --video_input ../demo/input/UBody/train/Entertainment_S7_Trim2_scene001.mp4 --video_output ../demo/output/smpler_x_l3_260107/UBody/Entertainment_S7_Trim2_scene001.mp4
-python inference.py --video_input ../demo/input/UBody/train/Online_class_S3_Trim12.mp4 --video_output ../demo/output/smpler_x_l3_260107/UBody/Online_class_S3_Trim12.mp4
-python inference.py --video_input ../demo/input/UBody/valid/Fitness_S6_Trim16.mp4 --video_output ../demo/output/smpler_x_l3_260107/UBody/Fitness_S6_Trim16.mp4
+python inference.py --video_input ../demo/input/UBody/train/Entertainment_S1_Trim1_scene001.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/UBody/Entertainment_S1_Trim1_scene001.mp4
+python inference.py --video_input ../demo/input/UBody/train/Entertainment_S7_Trim2_scene001.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/UBody/Entertainment_S7_Trim2_scene001.mp4
+python inference.py --video_input ../demo/input/UBody/train/Online_class_S3_Trim12.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/UBody/Online_class_S3_Trim12.mp4
+python inference.py --video_input ../demo/input/UBody/valid/Fitness_S6_Trim16.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/UBody/Fitness_S6_Trim16.mp4
 
 # MSCOCO
 # train
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000036.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000436.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000459.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000536.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000839.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000962.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000001407.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000002225.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
-python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000003412.jpg --output_folder ../demo/output/smpler_x_l3_260107/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000036.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000436.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000459.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000536.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000839.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000000962.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000001407.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000002225.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
+python inference.py --img_path D:/Dev/Dataset/MSCOCO/img/train2017/000000003412.jpg --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MSCOCO
 
 
 # AGORA
-python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00000.png --output_folder ../demo/output/smpler_x_l3_260107/AGORA
-python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00001.png --output_folder ../demo/output/smpler_x_l3_260107/AGORA
-python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00002.png --output_folder ../demo/output/smpler_x_l3_260107/AGORA
-python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00003.png --output_folder ../demo/output/smpler_x_l3_260107/AGORA
-python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00004.png --output_folder ../demo/output/smpler_x_l3_260107/AGORA
+python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00000.png --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/AGORA
+python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00001.png --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/AGORA
+python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00002.png --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/AGORA
+python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00003.png --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/AGORA
+python inference.py --img_path ../demo/input/AGORA/ag_trainset_renderpeople_bfh_archviz_5_10_cam02_00004.png --output_folder ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/AGORA
 
 # test
-python inference.py --video_input ../demo/input/MotionX++/brush_tooth_3_clip1.mp4 --video_output ../demo/output/MotionX++/brush_tooth_3_clip1_output.mp4
-python inference.py --video_input ../demo/input/MotionX++/Ways_to_Text_Voice-to-Text_clip1.mp4 --video_output ../demo/output/MotionX++/Ways_to_Text_Voice-to-Text_clip1.mp4
-python inference.py --video_input ../demo/input/MotionX++/Ways_to_Stand_Time_Out_clip2.mp4 --video_output ../demo/output/MotionX++/Ways_to_Stand_Time_Out_clip2.mp4
+python inference.py --video_input ../demo/input/MotionX++/brush_tooth_3_clip1.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MotionX++/brush_tooth_3_clip1_output.mp4
+python inference.py --video_input ../demo/input/MotionX++/Ways_to_Text_Voice-to-Text_clip1.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MotionX++/Ways_to_Text_Voice-to-Text_clip1.mp4
+python inference.py --video_input ../demo/input/MotionX++/Ways_to_Stand_Time_Out_clip2.mp4 --video_output ../demo/output/smpler_x_s3_randomvalue_260109/epoch_119/MotionX++/Ways_to_Stand_Time_Out_clip2.mp4
 
 
 
