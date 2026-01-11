@@ -350,7 +350,6 @@ class Model(nn.Module):
             # 여기서는 valid 값 있음
             loss['smplx_joint_img'] = self.coord_loss(joint_img, smpl_x.reduce_joint_set(targets['smplx_joint_img']), smpl_x.reduce_joint_set(meta_info['smplx_joint_trunc'])) * net_kps_2d_weight
 
-            # Fixed by SH Heo(260110) - for dataload debugging
             return loss
         else:
             # change hand output joint_img according to hand bbox

@@ -36,8 +36,8 @@ agora_valid_root_pose = True
 dataset_list = ['MSCOCO','UBody','AGORA','MotionX','SignAvatar']
 trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['MotionX']
-validset = ['MotionX']
+trainset_humandata = ['SignAvatar']
+validset = ['SignAvatar']
 testset = 'EHF'
 
 use_cache = False
