@@ -173,4 +173,3 @@ class SMPL(object):
         self.joint_regressor = self.orig_joint_regressor
 
 smpl_x = SMPLX()
-smpl = SMPL()

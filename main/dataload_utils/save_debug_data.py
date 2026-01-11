@@ -18,13 +18,15 @@ def tensor_to_serializable(obj):
     else:
         return obj
 
-def save_debug_data(targets, meta_info, save_dir='debug_output', prefix='sample'):
+# Fixed by SH Heo(260110) - for dataload debugging
+def save_debug_data(targets, meta_info, model_output=None, save_dir='debug_output', prefix='sample'):
     """
     Save targets and meta_info to a single JSON file for debugging.
 
     Args:
         targets: dict of tensors
         meta_info: dict of tensors
+        model_output: dict of model outputs (e.g., cam_trans)
         save_dir: output directory
         prefix: filename prefix
     """
@@ -35,6 +37,10 @@ def save_debug_data(targets, meta_info, save_dir='debug_output', prefix='sample'
         'targets': tensor_to_serializable(targets),
         'meta_info': tensor_to_serializable(meta_info)
     }
+
+    # Add model_output if provided
+    if model_output is not None:
+        combined_data['model_output'] = tensor_to_serializable(model_output)
 
     # Save to single JSON file
     output_path = os.path.join(save_dir, f'{prefix}_debug_data.json')
@@ -56,5 +62,14 @@ def save_debug_data(targets, meta_info, save_dir='debug_output', prefix='sample'
             print(f"  {k}: shape={list(v.shape)}, dtype={v.dtype}")
         else:
             print(f"  {k}: {type(v).__name__}")
+
+    # Fixed by SH Heo(260110) - for dataload debugging
+    if model_output is not None:
+        print("\n=== Model Output Keys ===")
+        for k, v in model_output.items():
+            if isinstance(v, torch.Tensor):
+                print(f"  {k}: shape={list(v.shape)}, dtype={v.dtype}")
+            else:
+                print(f"  {k}: {type(v).__name__}")
 
     return output_path

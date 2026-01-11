@@ -15,7 +15,7 @@ step_size = 10
 gamma = 0.5
 
 end_epoch = 5000
-train_batch_size = 16
+train_batch_size = 1
 
 syncbn = True
 bbox_ratio = 1.2
@@ -33,17 +33,16 @@ agora_fix_global_orient_transl = False
 agora_valid_root_pose = True
 
 # top5
-dataset_list = ['Human36M', 'MSCOCO', 'MPII', 'AGORA', 'EHF', 'SynBody', 'GTA_Human2', \
-    'EgoBody_Egocentric', 'EgoBody_Kinect', 'UBody', 'PW3D', 'MuCo', 'PROX']
+dataset_list = ['MSCOCO','UBody','AGORA','MotionX','SignAvatar']
 trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['AGORA']
-validset = ['AGORA']
+trainset_humandata = ['MotionX']
+validset = ['MotionX']
 testset = 'EHF'
 
 use_cache = False
 # downsample
-MSCOCO_train_sample_interval = 3
+MSCOCO_train_sample_interval = 1
 MSCOCO_valid_sample_interval = 1
 AGORA_train_sample_interval = 1
 AGORA_valid_sample_interval = 1
@@ -114,10 +113,10 @@ no_aug = True  # disable augmentation for data loading verification
 lr_mult = 1
 
 ## testing config
-test_batch_size = 16
+test_batch_size = 1
 
 ## others
-num_thread = 4
+num_thread = 0
 vis = False
 
 ## directory

@@ -3,7 +3,7 @@ import os.path as osp
 
 # will be update in exp
 num_gpus = -1
-exp_name = 'output/exp_251231'
+exp_name = 'output/exp1/pre_analysis'
 
 # quick access
 save_epoch = 1
@@ -65,8 +65,8 @@ FIT3D_train_sample_interval = 10
 Talkshow_train_sample_interval = 10
 
 # strategy
-data_strategy = 'concat' # 'balance' need to define total_data_len
-#total_data_len = 750000
+data_strategy = 'ratio' # 'balance' need to define total_data_len
+train_data_ratio = 1.0
 total_data_len = 'auto'
 
 # model
@@ -79,10 +79,10 @@ net_kps_2d_weight = 1.0
 
 agora_benchmark = 'agora_model' # 'agora_model', 'test_only'
 
-model_type = 'smpler_x_s'
-encoder_config_file = 'transformer_utils/configs/smpler_x/encoder/body_encoder_small.py'
-encoder_pretrained_model_path = '/home/oem/workspace/xrlab/Project/SMPLer-X_128/pretrained_models/pretrained_models/vitpose_small.pth'
-feat_dim = 384
+model_type = 'smpler_x_l'
+encoder_config_file = 'transformer_utils/configs/smpler_x/encoder/body_encoder_large.py'
+encoder_pretrained_model_path = '/home/oem/workspace/xrlab/Project/SMPLer-X_128/pretrained_models/pretrained_models/vitpose_large.pth'
+feat_dim = 1024
 
 
 ## =====FIXED ARGS============================================================
@@ -92,6 +92,11 @@ hand_pos_joint_num = 20
 face_pos_joint_num = 72
 num_task_token = 24
 num_noise_sample = 0
+
+## UBody setting
+train_sample_interval = 10
+test_sample_interval = 100
+make_same_len = False
 
 ## input, output size
 input_img_shape = (512, 384)
@@ -116,8 +121,8 @@ lr_mult = 1
 test_batch_size = 32
 
 ## others
-num_thread = 16
+num_thread = 4
 vis = False
 
-## directory (output_dir is set above for resume training)
+## directory
 output_dir, model_dir, vis_dir, log_dir, result_dir, code_dir = None, None, None, None, None, None

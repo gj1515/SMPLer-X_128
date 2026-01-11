@@ -16,7 +16,7 @@ from utils.transforms import rigid_align
 import tqdm
 import random
 from humandata import Cache
-
+import platform
 
 # Added by SH Heo (260105)
 def visualize_agora_keypoints_debug(datalist, save_dir='debug_keypoints_vis', num_samples=5):
@@ -74,7 +74,6 @@ def visualize_agora_keypoints_debug(datalist, save_dir='debug_keypoints_vis', nu
     ]
 
     num_to_vis = min(num_samples, len(datalist))
-    print(f'[DEBUG] Visualizing {num_to_vis} AGORA samples...')
 
     for idx in range(num_to_vis):
         data = datalist[idx]
@@ -82,13 +81,11 @@ def visualize_agora_keypoints_debug(datalist, save_dir='debug_keypoints_vis', nu
         joints_2d_path = data.get('joints_2d_path')
 
         if joints_2d_path is None or not osp.isfile(joints_2d_path):
-            print(f'[DEBUG] joints_2d_path not found: {joints_2d_path}')
             continue
 
         # Load image
         img = cv2.imread(img_path)
         if img is None:
-            print(f'[DEBUG] Failed to load image: {img_path}')
             continue
 
         # Load 2D joints from JSON (original coords are in 3840x2160)
@@ -144,7 +141,6 @@ def visualize_agora_keypoints_debug(datalist, save_dir='debug_keypoints_vis', nu
         save_path = osp.join(save_dir, f'AGORA_{idx}.jpg')
         cv2.imwrite(save_path, img)
 
-    print(f'[DEBUG] AGORA visualization complete. Check {save_dir}/')
 
 
 class AGORA(torch.utils.data.Dataset):
@@ -314,10 +310,18 @@ class AGORA(torch.utils.data.Dataset):
                     skip_count['is_valid'] += 1
                     continue
 
-                joints_2d_path = osp.join(self.data_path, ann['smplx_joints_2d_path'])
-                joints_3d_path = osp.join(self.data_path, ann['smplx_joints_3d_path'])
-                verts_path = osp.join(self.data_path, ann['smplx_verts_path'])
-                smplx_param_path = osp.join(self.data_path, ann['smplx_param_path'])
+                if platform.system() != 'Windows':
+                    joints_2d_path = osp.join(self.data_path, ann['smplx_joints_2d_path'])
+                    joints_3d_path = osp.join(self.data_path, ann['smplx_joints_3d_path'])
+                    verts_path = osp.join(self.data_path, ann['smplx_verts_path'])
+                    smplx_param_path = osp.join(self.data_path, ann['smplx_param_path'])
+                else:
+                    # for linux
+                    joints_2d_path = osp.join(self.data_path, ann['smplx_joints_2d_path'].replace('\\', '/'))
+                    joints_3d_path = osp.join(self.data_path, ann['smplx_joints_3d_path'].replace('\\', '/'))
+                    verts_path = osp.join(self.data_path, ann['smplx_verts_path'].replace('\\', '/'))
+                    smplx_param_path = osp.join(self.data_path, ann['smplx_param_path'].replace('\\', '/'))
+
                 kid = ann['kid']
                 gender = ann['gender']
                 if not osp.exists(smplx_param_path): print(smplx_param_path)
@@ -395,8 +399,6 @@ class AGORA(torch.utils.data.Dataset):
                                              aid) + '.json')
                     if not osp.isfile(json_path):
                         skip_count['json_not_found'] += 1
-                        if skip_count['json_not_found'] == 1:
-                            print(f'[DEBUG] First missing json_path: {json_path}')
                         continue
                     # Fixed by SH Heo (260108) - skip if image not found
                     if not osp.isfile(img_path):

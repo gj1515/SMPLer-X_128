@@ -3,7 +3,7 @@ import cv2
 import random
 from config import cfg
 import math
-from utils.human_models import smpl_x, smpl
+from utils.human_models import smpl_x
 from utils.transforms import cam2pixel, transform_joint_to_other_db
 from plyfile import PlyData, PlyElement
 import torch
@@ -206,11 +206,10 @@ def process_db_coord(joint_img, joint_cam, joint_valid, do_flip, img_shape, flip
     joint_img[:, 1] = joint_img[:, 1] / cfg.input_img_shape[0] * cfg.output_hm_shape[1]
 
     # check truncation
+    # Fixed by SH Heo (260111): depth >= 0 to include 2D datasets where depth=0 (dummy)
     joint_trunc = joint_valid * ((joint_img_original[:, 0] > 0) * (joint_img[:, 0] >= 0) * (joint_img[:, 0] < cfg.output_hm_shape[2]) * \
-                                 (joint_img_original[:, 1] > 0) *(joint_img[:, 1] >= 0) * (joint_img[:, 1] < cfg.output_hm_shape[1]) * \
-                                 (joint_img_original[:, 2] > 0) *(joint_img[:, 2] >= 0) * (joint_img[:, 2] < cfg.output_hm_shape[0])).reshape(-1,
-                                                                                                              1).astype(
-        np.float32)
+                                 (joint_img_original[:, 1] > 0) * (joint_img[:, 1] >= 0) * (joint_img[:, 1] < cfg.output_hm_shape[1]) * \
+                                 (joint_img_original[:, 2] >= 0) * (joint_img[:, 2] >= 0) * (joint_img[:, 2] < cfg.output_hm_shape[0])).reshape(-1,1).astype(np.float32)
 
     # transform joints to target db joints
     joint_img = transform_joint_to_other_db(joint_img, src_joints_name, target_joints_name)

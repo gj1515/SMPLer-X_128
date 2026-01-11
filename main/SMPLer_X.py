@@ -245,13 +245,14 @@ class Model(nn.Module):
             else:
                 loss['smplx_pose'] = self.param_loss(pose, targets['smplx_pose'], meta_info['smplx_pose_valid'])[:, 3:] * smplx_pose_weight
 
-            loss['smplx_shape'] = self.param_loss(shape, targets['smplx_shape'],
-                                                  meta_info['smplx_shape_valid'][:, None]) * smplx_shape_weight 
+            loss['smplx_shape'] = self.param_loss(shape, targets['smplx_shape'], meta_info['smplx_shape_valid'][:, None]) * smplx_shape_weight
             loss['smplx_expr'] = self.param_loss(expr, targets['smplx_expr'], meta_info['smplx_expr_valid'][:, None])
 
             # supervision for keypoints3d wo/ ra
+            # 여기서 gt, pred 모두 0 -> 이건 이해됨 (gt, pred, valid 전부 0)
             loss['joint_cam'] = self.coord_loss(joint_cam_wo_ra, targets['joint_cam'], meta_info['joint_valid'] * meta_info['is_3D'][:, None, None]) * smplx_kps_3d_weight
             # supervision for keypoints3d w/ ra
+            # 여기서 gt, pred 모두 0 -> 이건 확인해야함 (gt, pred가 전부 0 valid는 전부 1)
             loss['smplx_joint_cam'] = self.coord_loss(joint_cam, targets['smplx_joint_cam'], meta_info['smplx_joint_valid']) * smplx_kps_3d_weight
 
             if not (meta_info['lhand_bbox_valid'] == 0).all():
@@ -342,14 +343,14 @@ class Model(nn.Module):
                 coord = coord + trans  # global translation alignment
                 joint_proj = torch.cat((joint_proj[:, :smpl_x.joint_part['face'][0], :], coord,
                                         joint_proj[:, smpl_x.joint_part['face'][-1] + 1:, :]), 1)
-            
-            loss['joint_proj'] = self.coord_loss(joint_proj, targets['joint_img'][:, :, :2], meta_info['joint_trunc']) * smplx_kps_2d_weight
-            loss['joint_img'] = self.coord_loss(joint_img, smpl_x.reduce_joint_set(targets['joint_img']),
-                                                smpl_x.reduce_joint_set(meta_info['joint_trunc']), meta_info['is_3D']) * net_kps_2d_weight
-            
-            loss['smplx_joint_img'] = self.coord_loss(joint_img, smpl_x.reduce_joint_set(targets['smplx_joint_img']),
-                                                      smpl_x.reduce_joint_set(meta_info['smplx_joint_trunc'])) * net_kps_2d_weight
 
+            # 여기서 joint_proj, joint_img의 valid 모두 0
+            loss['joint_proj'] = self.coord_loss(joint_proj, targets['joint_img'][:, :, :2], meta_info['joint_trunc']) * smplx_kps_2d_weight
+            loss['joint_img'] = self.coord_loss(joint_img, smpl_x.reduce_joint_set(targets['joint_img']), smpl_x.reduce_joint_set(meta_info['joint_trunc']), meta_info['is_3D']) * net_kps_2d_weight
+            # 여기서는 valid 값 있음
+            loss['smplx_joint_img'] = self.coord_loss(joint_img, smpl_x.reduce_joint_set(targets['smplx_joint_img']), smpl_x.reduce_joint_set(meta_info['smplx_joint_trunc'])) * net_kps_2d_weight
+
+            # Fixed by SH Heo(260110) - for dataload debugging
             return loss
         else:
             # change hand output joint_img according to hand bbox

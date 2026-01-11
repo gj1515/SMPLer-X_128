@@ -119,15 +119,7 @@ def main():
 
             # forward
             trainer.optimizer.zero_grad()
-            show_input_image(inputs)
-            draw_2d_wholebody_kpts(inputs, targets, meta_info)
-
-            # Debug: save first sample's targets and meta_info to JSON
-            if epoch == 0 and itr == 0:
-                save_debug_data(targets, meta_info, save_dir='debug_output', prefix=f'epoch{epoch}_itr{itr}')
-
-            loss= trainer.model(inputs, targets, meta_info, 'train')
-
+            loss = trainer.model(inputs, targets, meta_info, 'train')
             loss_mean = {k: loss[k].mean() for k in loss}
             loss_sum = sum(loss_mean[k] for k in loss_mean)
             

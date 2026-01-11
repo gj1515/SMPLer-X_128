@@ -22,8 +22,9 @@ def show_input_image(inputs, window_name='Input Image', wait_key=1):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     cv2.imshow(window_name, img)
-    cv2.waitKey(wait_key)
-    if wait_key == 27:
+
+    key = cv2.waitKey(wait_key)
+    if key == 27:
         cv2.destroyWindow(window_name)
 
 def draw_2d_wholebody_kpts(inputs, targets, meta_info, window_name='2D Keypoints', wait_key=0):
@@ -142,6 +143,45 @@ def draw_2d_wholebody_kpts(inputs, targets, meta_info, window_name='2D Keypoints
                 if 0 <= x < img.shape[1] and 0 <= y < img.shape[0]:
                     radius = 2
                     cv2.circle(img, (x, y), radius, color, -1)
+
+    # 8. Draw hand/face bounding boxes
+    bbox_parts = {
+        'lhand': ((0, 255, 0), 'lhand_bbox_center', 'lhand_bbox_size', 'lhand_bbox_valid'),
+        'rhand': ((255, 0, 0), 'rhand_bbox_center', 'rhand_bbox_size', 'rhand_bbox_valid'),
+        'face': ((0, 255, 255), 'face_bbox_center', 'face_bbox_size', 'face_bbox_valid'),
+    }
+
+    for part_name, (color, center_key, size_key, valid_key) in bbox_parts.items():
+        # Check if keys exist in targets/meta_info
+        if center_key not in targets or size_key not in targets or valid_key not in meta_info:
+            continue
+
+        bbox_valid = meta_info[valid_key][0].item()
+        if bbox_valid <= 0:
+            continue
+
+        # Get center and size (in output_hm_shape space)
+        center = targets[center_key][0].cpu().numpy()  # [2]
+        size = targets[size_key][0].cpu().numpy()      # [2]
+
+        # Scale to input_img_shape
+        cx = center[0] / cfg.output_hm_shape[2] * cfg.input_img_shape[1]
+        cy = center[1] / cfg.output_hm_shape[1] * cfg.input_img_shape[0]
+        w = size[0] / cfg.output_hm_shape[2] * cfg.input_img_shape[1]
+        h = size[1] / cfg.output_hm_shape[1] * cfg.input_img_shape[0]
+
+        # Calculate corners
+        x1, y1 = int(cx - w / 2), int(cy - h / 2)
+        x2, y2 = int(cx + w / 2), int(cy + h / 2)
+
+        # Clamp to image bounds
+        x1 = max(0, min(x1, img.shape[1] - 1))
+        y1 = max(0, min(y1, img.shape[0] - 1))
+        x2 = max(0, min(x2, img.shape[1] - 1))
+        y2 = max(0, min(y2, img.shape[0] - 1))
+
+        # Draw rectangle
+        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
 
     cv2.imshow(window_name, img)
     key = cv2.waitKey(wait_key)
