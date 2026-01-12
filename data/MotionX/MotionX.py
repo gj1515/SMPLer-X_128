@@ -208,8 +208,13 @@ class MotionX(torch.utils.data.Dataset):
                 rhand_bbox = self._compute_bbox_from_keypoints(rhand_kpts)
                 face_bbox = self._compute_bbox_from_keypoints(face_kpts)
 
+                # Validity based on bbox computation
+                lhand_valid = lhand_bbox is not None
+                rhand_valid = rhand_bbox is not None
+                face_valid = face_bbox is not None
+
                 # Convert smplx_params
-                smplx_param = self._convert_smplx_params(mesh_ann, bbox)
+                smplx_param = self._convert_smplx_params(mesh_ann, bbox, lhand_valid, rhand_valid, face_valid)
 
                 # Generate unique ann_id for evaluate()
                 ann_id = f'{category}_{clip_name}_{image_id}'
@@ -276,7 +281,7 @@ class MotionX(torch.utils.data.Dataset):
 
         return np.array([xmin, ymin, xmax, ymax], dtype=np.float32)
 
-    def _convert_smplx_params(self, mesh_ann, bbox):
+    def _convert_smplx_params(self, mesh_ann, bbox, lhand_valid, rhand_valid, face_valid):
         """Convert Motion-X++ smplx_params to expected format.
 
         Motion-X++: smplx_params, camera_params (not used, use cfg instead)
@@ -303,9 +308,9 @@ class MotionX(torch.utils.data.Dataset):
                 'shape': smplx_params['shape'],
                 'expr': smplx_params['expr'],
                 'trans': smplx_params['trans'],
-                'lhand_valid': True,  # TODO: compute from keypoints
-                'rhand_valid': True,
-                'face_valid': True,
+                'lhand_valid': lhand_valid,
+                'rhand_valid': rhand_valid,
+                'face_valid': face_valid,
             },
             'cam_param': {
                 'focal': focal,

@@ -254,6 +254,7 @@ class Model(nn.Module):
             # supervision for keypoints3d w/ ra
             # 여기서 gt, pred 모두 0 -> 이건 확인해야함 (gt, pred가 전부 0 valid는 전부 1)
             loss['smplx_joint_cam'] = self.coord_loss(joint_cam, targets['smplx_joint_cam'], meta_info['smplx_joint_valid']) * smplx_kps_3d_weight
+            print(meta_info['smplx_joint_valid'])
 
             if not (meta_info['lhand_bbox_valid'] == 0).all():
                 loss['lhand_bbox'] = (self.coord_loss(lhand_bbox_center, targets['lhand_bbox_center'], meta_info['lhand_bbox_valid'][:, None]) +
@@ -269,7 +270,7 @@ class Model(nn.Module):
             #     out = {}
             targets['original_joint_img'] = targets['joint_img'].clone()
             targets['original_smplx_joint_img'] = targets['smplx_joint_img'].clone()
-            # out['original_joint_proj'] = joint_proj.clone()
+            original_joint_proj = joint_proj.clone()  # save before hand/face bbox transform
             if not (meta_info['lhand_bbox_valid'] + meta_info['rhand_bbox_valid'] == 0).all():
 
                 # change hand target joint_img and joint_trunc according to hand bbox (cfg.output_hm_shape -> downsampled hand bbox space)
@@ -350,6 +351,7 @@ class Model(nn.Module):
             # 여기서는 valid 값 있음
             loss['smplx_joint_img'] = self.coord_loss(joint_img, smpl_x.reduce_joint_set(targets['smplx_joint_img']), smpl_x.reduce_joint_set(meta_info['smplx_joint_trunc'])) * net_kps_2d_weight
 
+            # Fixed by SH Heo(260110) - for dataload debugging
             return loss
         else:
             # change hand output joint_img according to hand bbox

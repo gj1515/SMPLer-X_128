@@ -188,3 +188,116 @@ def draw_2d_wholebody_kpts(inputs, targets, meta_info, window_name='2D Keypoints
 
     if key == 27:
         cv2.destroyWindow(window_name)
+
+
+def draw_projected_3d_joints(inputs, model_output, window_name='Projected 3D Joints', wait_key=0):
+    """
+    Draw projected 3D joints (from SMPL-X model output) on input image.
+
+    Args:
+        inputs: {'img': [B,C,H,W] tensor}
+        model_output: {'joint_proj': [B,137,2] tensor} - projected joints in output_hm_shape space
+        window_name: window title
+        wait_key: 0 = wait for key, ESC to close
+    """
+    # 1. Image: tensor -> numpy
+    img_tensor = inputs['img']
+    img = img_tensor[0].cpu().numpy()  # [C, H, W]
+    img = img.transpose(1, 2, 0)  # [H, W, C]
+
+    if img.max() <= 1.0:
+        img = (img * 255).astype(np.uint8)
+    else:
+        img = img.astype(np.uint8)
+
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img = img.copy()  # make writable
+
+    # 2. Get projected joint coordinates
+    joint_proj = model_output['joint_proj'][0].cpu().numpy()  # [137, 2]
+
+    # 3. Convert coordinates: output_hm_shape -> input_img_shape
+    # joint_proj is in output_hm_shape space (16, 16, 12)
+    # need to scale to input_img_shape (512, 384)
+    joint_proj_scaled = joint_proj.copy()
+    joint_proj_scaled[:, 0] = joint_proj[:, 0] / cfg.output_hm_shape[2] * cfg.input_img_shape[1]  # x: /12 * 384
+    joint_proj_scaled[:, 1] = joint_proj[:, 1] / cfg.output_hm_shape[1] * cfg.input_img_shape[0]  # y: /16 * 512
+
+    # 4. Define body part ranges and colors (BGR) - SMPLX 137 joints order
+    body_parts = {
+        'body': (range(0, 25), (0, 255, 255)),      # Yellow - body (0-24)
+        'lhand': (range(25, 45), (0, 255, 0)),      # Green - left hand (25-44)
+        'rhand': (range(45, 65), (255, 0, 0)),      # Blue - right hand (45-64)
+        'face': (range(65, 137), (255, 0, 255)),    # Magenta - face (65-136)
+    }
+
+    # 5. Define skeleton connections (same as draw_2d_wholebody_kpts)
+    body_skeleton = [
+        (0, 1), (0, 2),      # Pelvis -> L_Hip, R_Hip
+        (1, 3), (3, 5),      # L_Hip -> L_Knee -> L_Ankle
+        (2, 4), (4, 6),      # R_Hip -> R_Knee -> R_Ankle
+        (0, 7),              # Pelvis -> Neck
+        (7, 8), (7, 9),      # Neck -> L_Shoulder, R_Shoulder
+        (8, 10), (10, 12),   # L_Shoulder -> L_Elbow -> L_Wrist
+        (9, 11), (11, 13),   # R_Shoulder -> R_Elbow -> R_Wrist
+        (5, 14), (5, 15), (5, 16),  # L_Ankle -> toes/heel
+        (6, 17), (6, 18), (6, 19),  # R_Ankle -> toes/heel
+        (7, 24),             # Neck -> Nose
+        (24, 22), (24, 23),  # Nose -> Eyes
+        (22, 20), (23, 21),  # Eyes -> Ears
+    ]
+
+    lhand_skeleton = [
+        (12, 25), (25, 26), (26, 27), (27, 28),  # Thumb
+        (12, 29), (29, 30), (30, 31), (31, 32),  # Index
+        (12, 33), (33, 34), (34, 35), (35, 36),  # Middle
+        (12, 37), (37, 38), (38, 39), (39, 40),  # Ring
+        (12, 41), (41, 42), (42, 43), (43, 44),  # Pinky
+    ]
+
+    rhand_skeleton = [
+        (13, 45), (45, 46), (46, 47), (47, 48),  # Thumb
+        (13, 49), (49, 50), (50, 51), (51, 52),  # Index
+        (13, 53), (53, 54), (54, 55), (55, 56),  # Middle
+        (13, 57), (57, 58), (58, 59), (59, 60),  # Ring
+        (13, 61), (61, 62), (62, 63), (63, 64),  # Pinky
+    ]
+
+    face_contour_skeleton = [(i, i+1) for i in range(120, 136)]
+
+    skeleton_parts = {
+        'body': (body_skeleton, (0, 255, 255)),      # Yellow
+        'lhand': (lhand_skeleton, (0, 255, 0)),      # Green
+        'rhand': (rhand_skeleton, (255, 0, 0)),      # Blue
+        'face': (face_contour_skeleton, (255, 0, 255)),  # Magenta
+    }
+
+    # 6. Draw bones first
+    num_joints = joint_proj_scaled.shape[0]
+    for part_name, (skeleton, color) in skeleton_parts.items():
+        for (i, j) in skeleton:
+            if i >= num_joints or j >= num_joints:
+                continue
+            x1, y1 = int(joint_proj_scaled[i, 0]), int(joint_proj_scaled[i, 1])
+            x2, y2 = int(joint_proj_scaled[j, 0]), int(joint_proj_scaled[j, 1])
+            # Check bounds
+            if (0 <= x1 < img.shape[1] and 0 <= y1 < img.shape[0] and
+                0 <= x2 < img.shape[1] and 0 <= y2 < img.shape[0]):
+                cv2.line(img, (x1, y1), (x2, y2), color, 1, cv2.LINE_AA)
+
+    # 7. Draw keypoints
+    for part_name, (indices, color) in body_parts.items():
+        for idx in indices:
+            if idx >= num_joints:
+                continue
+            x = int(joint_proj_scaled[idx, 0])
+            y = int(joint_proj_scaled[idx, 1])
+            if 0 <= x < img.shape[1] and 0 <= y < img.shape[0]:
+                radius = 2
+                cv2.circle(img, (x, y), radius, color, -1)
+
+    cv2.imshow(window_name, img)
+    key = cv2.waitKey(wait_key)
+
+    if key == 27:
+        cv2.destroyWindow(window_name)

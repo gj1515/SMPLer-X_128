@@ -36,8 +36,8 @@ agora_valid_root_pose = True
 dataset_list = ['MSCOCO','UBody','AGORA','MotionX','SignAvatar']
 trainset_3d = []
 trainset_2d = []
-trainset_humandata = ['SignAvatar']
-validset = ['SignAvatar']
+trainset_humandata = ['MotionX']
+validset = ['MotionX']
 testset = 'EHF'
 
 use_cache = False
@@ -64,8 +64,9 @@ FIT3D_train_sample_interval = 10
 Talkshow_train_sample_interval = 10
 
 # strategy
-data_strategy = 'concat' # 'balance' need to define total_data_len
-#total_data_len = 750000
+data_strategy = 'ratio' # 'balance' need to define total_data_len
+train_data_ratio = 1.0
+valid_data_ratio = 1.0
 total_data_len = 'auto'
 
 # model

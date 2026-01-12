@@ -184,6 +184,9 @@ class SignAvatar(torch.utils.data.Dataset):
                     continue
 
                 # bbox [x, y, w, h] from JSON
+                if 'bbox_xywh' not in ann or ann['bbox_xywh'] is None:
+                    print(f"[SignAvatar] Skipping clip {clip_name} frame {frame_idx}: bbox_xywh missing")
+                    continue
                 bbox = np.array(ann['bbox_xywh'], dtype=np.float32)
                 if bbox[2] <= 0 or bbox[3] <= 0:
                     continue
@@ -192,6 +195,9 @@ class SignAvatar(torch.utils.data.Dataset):
 
                 # Joint coordinates from JSON keypoints_2d
                 kp2d = ann['keypoints_2d']
+                if kp2d is None:
+                    print(f"[SignAvatar] Skipping clip {clip_name} frame {frame_idx}: keypoints_2d is None")
+                    continue
                 body_kpts = np.array(kp2d['body_kpts'], dtype=np.float32).reshape(-1, 3)
                 foot_kpts = np.array(kp2d['foot_kpts'], dtype=np.float32).reshape(-1, 3)
                 lhand_kpts = np.array(kp2d['lefthand_kpts'], dtype=np.float32).reshape(-1, 3)

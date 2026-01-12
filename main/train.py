@@ -19,7 +19,7 @@ from common.utils.distribute_utils import (
 )
 from mmcv.runner import get_dist_info
 from data.dataset import print_dataset_info
-from main.dataload_utils.check_2d import show_input_image, draw_2d_wholebody_kpts
+from main.dataload_utils.check_2d import show_input_image, draw_2d_wholebody_kpts, draw_projected_3d_joints
 from main.dataload_utils.save_debug_data import save_debug_data
 
 def parse_args():

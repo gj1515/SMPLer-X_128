@@ -229,6 +229,14 @@ class Trainer(Base):
             for ds_name in validset_list:
                 exec('from ' + ds_name + ' import ' + ds_name)
 
+            # Apply 'ratio' strategy for validation datasets
+            if data_strategy == 'ratio':
+                valid_data_ratio = getattr(cfg, 'valid_data_ratio', 1.0)
+                valid_interval = max(1, int(1 / valid_data_ratio))
+                self.logger_info(f"Using [ratio] strategy for valid: valid_data_ratio={valid_data_ratio}, interval={valid_interval}")
+                for ds_name in validset_list:
+                    setattr(cfg, f'{ds_name}_valid_sample_interval', valid_interval)
+
             validset_loaders = []
             for validset_name in validset_list:
                 validset_loaders.append(eval(validset_name)(transforms.ToTensor(), "valid"))
